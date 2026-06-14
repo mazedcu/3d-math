@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BlobMerge — 3D Ball Grouping</title>
+    <meta name="description" content="Drag colorful balls to snap them together into groups. A satisfying 3D physics sandbox.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+</head>
+<body>
+    <canvas id="c"></canvas>
+
+    <!-- HUD -->
+    <div id="hud" class="hud">
+        <div class="hud-left">
+            <div class="stat accent">
+                <div class="stat-val" id="s-score">0</div>
+                <div class="stat-lbl">Correct</div>
+            </div>
+            <div class="stat">
+                <div class="stat-val" id="s-balls">53</div>
+                <div class="stat-lbl">On Field</div>
+            </div>
+            <div class="stat">
+                <div class="stat-val" id="s-groups">0</div>
+                <div class="stat-lbl">Groups</div>
+            </div>
+            <div class="stat">
+                <div class="stat-val" id="s-target">🎯 10</div>
+                <div class="stat-lbl">Group Size</div>
+            </div>
+        </div>
+        <div class="hud-right">
+            <h1 class="title"><span class="t1">BLOB</span><span class="t2">MERGE</span></h1>
+            <button class="btn" id="btn-guess" style="background: linear-gradient(135deg,var(--violet),#a855f7); color: white; border: none; box-shadow: 0 4px 16px rgba(124,58,237,0.3);">🔢 Guess Total</button>
+            <button class="btn" id="btn-scatter">🔀 Scatter</button>
+            <button class="btn" id="btn-reset">🔄 Reset</button>
+            <a href="index.html" class="btn" style="text-decoration:none; display:flex; align-items:center;">🏠 Menu</a>
+        </div>
+    </div>
+
+    <!-- Group merge notification -->
+    <div class="notify" id="notify">
+        <span id="notify-text">Group merged!</span>
+    </div>
+
+    <!-- Count Modal -->
+    <div class="overlay" id="count-modal">
+        <div class="count-box">
+            <div class="count-emoji">🔢</div>
+            <div class="count-title">How many balls are there in TOTAL?</div>
+            <input type="number" class="count-input" id="count-input" min="1" autocomplete="off" placeholder="Type your answer...">
+            <div class="count-btns">
+                <button class="btn primary" id="count-submit">Check ✓</button>
+                <button class="btn" id="count-cancel">Cancel</button>
+            </div>
+            <div class="count-result" id="count-result"></div>
+        </div>
+    </div>
+
+    <!-- Hurray overlay -->
+    <div class="hurray" id="hurray">
+        <div class="hurray-text" id="hurray-text">🎉 HURRAY!</div>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.163.0/examples/jsm/"
+        }
+    }
+    </script>
+    <script type="module" src="blob.js"></script>
+</body>
+</html>

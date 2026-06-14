@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asteroid Trajectory</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <style>
+        body {
+            background-color: #09090b;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            color: white;
+            margin: 0;
+        }
+
+        .header { margin-top: 20px; text-align: center; }
+
+        .grid-container {
+            position: relative;
+            width: 400px;
+            height: 400px;
+            background: #18181b;
+            border-left: 2px solid white;
+            border-bottom: 2px solid white;
+            margin-top: 20px;
+            background-image: 
+                linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 40px 40px; /* 10x10 grid */
+        }
+
+        .asteroid {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background: #71717a;
+            border-radius: 50%;
+            transform: translate(-50%, 50%);
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 10px #71717a;
+            z-index: 10;
+        }
+
+        .laser-line {
+            position: absolute;
+            bottom: 0; left: 0;
+            height: 4px;
+            background: #22c55e;
+            transform-origin: 0 50%;
+            width: 0;
+            box-shadow: 0 0 15px #22c55e;
+            transition: width 0.3s linear;
+        }
+
+        .controls {
+            margin-top: 30px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.5rem;
+            background: #27272a;
+            padding: 20px;
+            border-radius: 15px;
+        }
+
+        .input-box {
+            width: 60px;
+            font-size: 1.5rem;
+            text-align: center;
+            background: #3f3f46;
+            color: white;
+            border: 2px solid #52525b;
+            border-radius: 5px;
+            font-family: inherit;
+        }
+
+        .btn-fire {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1.2rem;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #b91c1c;
+            margin-left: 20px;
+        }
+        .btn-fire:active { transform: translateY(4px); box-shadow: 0 0 0 #b91c1c; }
+
+    </style>
+</head>
+<body>
+    <a href="index.html" class="btn" style="position: absolute; top: 20px; left: 20px;">🏠 Menu</a>
+    
+    <div class="header">
+        <h1 style="color: #ef4444; margin: 0;">ASTEROID TRAJECTORY</h1>
+        <p style="color: #a1a1aa; margin-top: 5px;">Fire a laser line `Y = MX + B` to hit the asteroid!</p>
+        <div style="font-size: 1.2rem; color: #fde047;">Score: <span id="score">0</span></div>
+    </div>
+
+    <div class="grid-container" id="grid">
+        <div class="laser-line" id="laser"></div>
+        <div class="asteroid" id="asteroid">☄️</div>
+    </div>
+
+    <div class="controls">
+        <span>Y = </span>
+        <input type="number" id="m-in" class="input-box" placeholder="M">
+        <span>X + </span>
+        <input type="number" id="b-in" class="input-box" placeholder="B">
+        <button class="btn-fire" id="btn-fire">FIRE LASER</button>
+    </div>
+
+    <script src="asteroid.js"></script>
+</body>
+</html>

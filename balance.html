@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Balance Scale</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <style>
+        body {
+            background-color: #78350f;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            color: white;
+            margin: 0;
+            background-image: radial-gradient(circle at center, #92400e 0%, #451a03 100%);
+        }
+
+        .header { margin-top: 20px; text-align: center; }
+
+        .scale-container {
+            position: relative;
+            width: 600px;
+            height: 400px;
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .beam {
+            width: 500px;
+            height: 10px;
+            background: #d97706;
+            margin-top: 150px;
+            position: relative;
+            transform-origin: center;
+            transition: transform 0.5s ease-out;
+        }
+
+        .base {
+            width: 0; 
+            height: 0; 
+            border-left: 50px solid transparent;
+            border-right: 50px solid transparent;
+            border-bottom: 200px solid #b45309;
+            position: absolute;
+            top: 150px;
+        }
+
+        .pan {
+            width: 150px;
+            height: 10px;
+            background: #fcd34d;
+            position: absolute;
+            bottom: -150px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 5px;
+            flex-wrap: wrap-reverse;
+            padding-bottom: 10px;
+            transition: transform 0.5s ease-out;
+        }
+        .pan.left { left: -75px; }
+        .pan.right { right: -75px; }
+
+        .pan::before {
+            content: '';
+            position: absolute;
+            top: -150px;
+            left: 0;
+            width: 2px;
+            height: 150px;
+            background: rgba(255,255,255,0.5);
+        }
+        .pan::after {
+            content: '';
+            position: absolute;
+            top: -150px;
+            right: 0;
+            width: 2px;
+            height: 150px;
+            background: rgba(255,255,255,0.5);
+        }
+
+        .block-x {
+            width: 40px; height: 40px;
+            background: #3b82f6;
+            border: 2px solid #1e3a8a;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 1.5rem;
+            border-radius: 5px;
+        }
+        .block-1 {
+            width: 30px; height: 30px;
+            background: #10b981;
+            border: 2px solid #064e3b;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 1rem;
+            border-radius: 5px;
+        }
+
+        .ui-panel {
+            background: rgba(0,0,0,0.3);
+            padding: 20px 40px;
+            border-radius: 20px;
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .input-box {
+            width: 100px;
+            font-size: 2rem;
+            text-align: center;
+            padding: 10px;
+            border-radius: 10px;
+            border: none;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .btn-submit {
+            background: #f59e0b;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.5rem;
+            border-radius: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #b45309;
+        }
+        .btn-submit:active { transform: translateY(6px); box-shadow: 0 0 0 #b45309; }
+
+        .equation-text {
+            font-size: 2rem;
+            font-family: 'JetBrains Mono', monospace;
+            color: #fde047;
+            margin-top: -30px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="btn" style="position: absolute; top: 20px; left: 20px;">🏠 Menu</a>
+
+    <div class="header">
+        <h1 style="margin: 0; color: #fbbf24;">BALANCE SCALE</h1>
+        <div style="font-size: 1.2rem; color: #fde047;">Score: <span id="score">0</span></div>
+    </div>
+
+    <div class="scale-container">
+        <div class="equation-text" id="eq-text">2X + 3 = 11</div>
+        <div class="beam" id="beam">
+            <div class="pan left" id="pan-left"></div>
+            <div class="pan right" id="pan-right"></div>
+        </div>
+        <div class="base"></div>
+    </div>
+
+    <div class="ui-panel">
+        <label style="font-size: 2rem; font-weight: bold; color: #60a5fa;">X = </label>
+        <input type="number" id="x-in" class="input-box">
+        <button class="btn-submit" id="btn-submit">CHECK BALANCE</button>
+    </div>
+
+    <script src="balance.js"></script>
+</body>
+</html>

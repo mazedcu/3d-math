@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tile Math 3D</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <style>
+        .stat-floor { border-color: rgba(124, 58, 237, 0.25); }
+        .stat-floor .stat-val { color: var(--violet); }
+
+        .stat-tile { border-color: rgba(6, 182, 212, 0.25); }
+        .stat-tile .stat-val { color: var(--cyan); }
+
+        /* Mode selector (start screen, bottom-left like snake) */
+        #mode-screen {
+            position: fixed; bottom: 28px; left: 24px; z-index: 300;
+            display: flex; flex-direction: column; gap: 10px;
+            background: var(--surface); backdrop-filter: blur(16px);
+            border: 1px solid var(--border); border-radius: 18px;
+            padding: 16px 20px; max-width: 340px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+            transition: opacity 0.4s, transform 0.4s;
+        }
+        #mode-screen.hidden { opacity: 0; transform: translateY(20px); pointer-events: none; }
+        .mode-title { font-size: 1rem; font-weight: 800; color: var(--text); }
+        .mode-desc { font-size: 0.75rem; color: var(--dim); line-height: 1.5; }
+        .mode-btns { display: flex; flex-direction: column; gap: 8px; }
+        .mode-btn {
+            font-size: 0.9rem; font-weight: 700; padding: 12px 18px;
+            border-radius: 12px; cursor: pointer; border: none; color: white;
+            text-align: left; transition: transform 0.15s;
+        }
+        .mode-btn:hover { transform: scale(1.03); }
+        .mode-btn.m1 { background: var(--violet, #7c3aed); }
+        .mode-btn.m2 { background: var(--cyan, #06b6d4); }
+        .mode-btn small { display: block; font-weight: 400; font-size: 0.7rem; opacity: 0.85; margin-top: 2px; }
+
+        /* Answer panel (bottom center) */
+        #answer-panel {
+            position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%); z-index: 50;
+            display: flex; align-items: center; gap: 12px;
+            background: var(--surface); backdrop-filter: blur(16px);
+            border: 1px solid var(--border); border-radius: 18px;
+            padding: 14px 20px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+            transition: opacity 0.4s, transform 0.4s;
+        }
+        #answer-panel.hidden { opacity: 0; transform: translateX(-50%) translateY(20px); pointer-events: none; }
+        .ap-question { font-size: 0.9rem; font-weight: 700; color: var(--text); max-width: 280px; }
+        #answer-input {
+            width: 90px; padding: 10px 12px; border-radius: 12px;
+            border: 2px solid var(--border); background: rgba(255,255,255,0.85);
+            font-family: var(--fm); font-size: 1.3rem; font-weight: 700; text-align: center;
+            color: var(--text); outline: none;
+        }
+        #answer-input:focus { border-color: var(--violet); }
+
+        /* Hint for mode 1 */
+        #hint {
+            position: fixed; top: 90px; left: 50%; transform: translateX(-50%); z-index: 40;
+            background: var(--surface); backdrop-filter: blur(12px);
+            border: 1px solid var(--border); border-radius: 12px;
+            padding: 8px 18px; font-size: 0.8rem; font-weight: 600; color: var(--dim);
+            transition: opacity 0.3s;
+        }
+        #hint.hidden { opacity: 0; pointer-events: none; }
+
+        /* Result banner */
+        #result {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); z-index: 200;
+            text-align: center; padding: 28px 44px; border-radius: 22px;
+            background: rgba(255,255,255,0.95); backdrop-filter: blur(16px);
+            box-shadow: 0 8px 40px rgba(0,0,0,0.2);
+            opacity: 0; pointer-events: none; transition: opacity 0.3s;
+        }
+        #result.show { opacity: 1; pointer-events: all; }
+        .res-title { font-size: 2.2rem; font-weight: 900; margin-bottom: 8px; }
+        .res-title.win { color: var(--emerald); }
+        .res-title.fail { color: var(--rose); }
+        .res-desc { font-size: 1rem; color: var(--dim); margin-bottom: 18px; }
+    </style>
+</head>
+<body>
+    <canvas id="c"></canvas>
+
+    <!-- HUD -->
+    <div id="hud" class="hud">
+        <div class="hud-left">
+            <div class="stat stat-floor">
+                <div class="stat-val" id="s-floor">-</div>
+                <div class="stat-lbl">Floor Size</div>
+            </div>
+            <div class="stat stat-tile">
+                <div class="stat-val" id="s-tile">-</div>
+                <div class="stat-lbl">Tile Size</div>
+            </div>
+        </div>
+        <div class="hud-right">
+            <h1 class="title"><span style="color:var(--violet)">TILE</span><span class="t2">MATH</span></h1>
+            <a href="index.html" class="btn" style="text-decoration:none; display:flex; align-items:center;">🏠 Menu</a>
+        </div>
+    </div>
+
+    <!-- Mode Select -->
+    <div id="mode-screen">
+        <div class="mode-title">Tile the Floor!</div>
+        <div class="mode-desc">How many tiles does it take to cover the floor?</div>
+        <div class="mode-btns">
+            <button class="mode-btn m1" id="btn-mode1">🧱 Place &amp; Count<small>Put tiles on the floor yourself, then fill in the blank</small></button>
+            <button class="mode-btn m2" id="btn-mode2">🤔 Predict<small>You get floor &amp; tile sizes — guess the count, then watch it fill</small></button>
+        </div>
+    </div>
+
+    <!-- Hint -->
+    <div id="hint" class="hidden">🖱️ Drag tiles from the stack and drop them on the floor</div>
+
+    <!-- Answer panel -->
+    <div id="answer-panel" class="hidden">
+        <div class="ap-question" id="ap-question">How many tiles are needed to fill the floor?</div>
+        <input id="answer-input" type="number" min="1" placeholder="?">
+        <button class="btn primary" id="btn-check">Check</button>
+    </div>
+
+    <!-- Result -->
+    <div id="result">
+        <div class="res-title win" id="res-title">CORRECT!</div>
+        <div class="res-desc" id="res-desc"></div>
+        <button class="btn primary" id="btn-next">Play Again</button>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.163.0/examples/jsm/"
+        }
+    }
+    </script>
+    <script type="module" src="tiles.js?v=5"></script>
+</body>
+</html>

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Train Conductor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <style>
+        body {
+            background-color: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            color: #0f172a;
+            margin: 0;
+            background-image: radial-gradient(#e2e8f0 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .header { margin-top: 40px; text-align: center; }
+
+        .ticket {
+            background: #fff;
+            border: 4px dashed #94a3b8;
+            padding: 20px 40px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-size: 1.5rem;
+            font-family: 'JetBrains Mono', monospace;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .controls {
+            margin-top: 40px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 3rem;
+            background: #1e293b;
+            padding: 30px;
+            border-radius: 20px;
+            color: white;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+
+        .input-box {
+            width: 80px;
+            font-size: 3rem;
+            text-align: center;
+            background: #0f172a;
+            color: #38bdf8;
+            border: none;
+            border-radius: 10px;
+            font-family: inherit;
+        }
+
+        .btn-submit {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.5rem;
+            border-radius: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #059669;
+            margin-left: 20px;
+            font-family: 'Outfit', sans-serif;
+        }
+        .btn-submit:active { transform: translateY(6px); box-shadow: 0 0 0 #059669; }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="btn" style="position: absolute; top: 20px; left: 20px;">🏠 Menu</a>
+    
+    <div class="header">
+        <h1 style="color: #0284c7; margin: 0;">TRAIN CONDUCTOR</h1>
+        <div style="font-size: 1.2rem; color: #f59e0b; font-weight: bold;">Score: <span id="score">0</span></div>
+    </div>
+
+    <div class="ticket" id="ticket">
+        Departure: 2:45 PM<br>
+        Travel Time: 1h 30m<br>
+        <strong>Arrival Time?</strong>
+    </div>
+
+    <div class="controls">
+        <input type="number" id="h-in" class="input-box" placeholder="12" min="1" max="12">
+        <span>:</span>
+        <input type="number" id="m-in" class="input-box" placeholder="00" min="0" max="59">
+        <select id="ampm-in" style="font-size: 2rem; border-radius: 10px; padding: 5px;">
+            <option>AM</option>
+            <option>PM</option>
+        </select>
+        <button class="btn-submit" id="btn-submit">PUNCH TICKET</button>
+    </div>
+
+    <script src="train.js"></script>
+</body>
+</html>

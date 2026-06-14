@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biplane Multiples</title>
+    <meta name="description" content="Fly your biplane and shoot down numbers that are not multiples of your target!">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <style>
+        .target-box {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 30;
+            background: rgba(26, 26, 46, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 2px solid #3b82f6;
+            border-radius: 20px;
+            padding: 16px 36px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(59, 130, 246, 0.3);
+        }
+        .target-label {
+            font-size: 1rem;
+            color: rgba(255,255,255,0.7);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+        .target-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #60a5fa;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .health-bar {
+            width: 150px;
+            height: 12px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 6px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+        .health-fill {
+            height: 100%;
+            background: #ef4444;
+            width: 100%;
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="c"></canvas>
+
+    <!-- Top HUD -->
+    <div id="hud" class="hud">
+        <div class="hud-left">
+            <div class="stat accent" style="--accent-color: #3b82f6;">
+                <div class="stat-val" id="s-score">0</div>
+                <div class="stat-lbl">Score</div>
+            </div>
+            <div class="stat">
+                <div class="health-bar">
+                    <div id="health-fill" class="health-fill"></div>
+                </div>
+                <div class="stat-lbl">Health</div>
+            </div>
+        </div>
+        <div class="hud-right" style="display:flex; align-items:center;">
+            <div style="color: #facc15; font-weight: 800; font-size: 1.2rem; margin-right: 20px; letter-spacing: 1px;">SHOOT THE MULTIPLES!</div>
+            <h1 class="title"><span class="t1" style="color: #60a5fa;">BIPLANE</span><span class="t2" style="color: #93c5fd;">MULTIPLES</span></h1>
+            <a href="index.html" class="btn" style="text-decoration:none; margin-left: 10px; display:flex; align-items:center;">🏠 Menu</a>
+        </div>
+    </div>
+
+    <!-- Bottom Target -->
+    <div class="target-box">
+        <div class="target-label">Target Multiples Of</div>
+        <div class="target-value" id="target-number">?</div>
+    </div>
+
+    <!-- Notification -->
+    <div class="notify" id="notify">
+        <span id="notify-text">Nice!</span>
+    </div>
+
+    <!-- Count Modal (used for Start/Restart) -->
+    <div class="overlay visible" id="start-overlay">
+        <div class="count-box">
+            <div class="count-emoji">✈️</div>
+            <div class="count-title" id="game-end-title">Ready for Takeoff!</div>
+            <div class="count-result" style="margin-bottom: 20px; color: rgba(0,0,0,0.7)">
+                Target: Multiples of <span id="start-target" style="font-weight: bold; color: #3b82f6;">3</span><br><br>
+                <strong>SHOOT</strong> the correct multiples!<br>
+                <strong>DODGE</strong> everything else!
+            </div>
+            <button class="btn primary" id="btn-start" style="width: 100%">START ENGINE</button>
+        </div>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.163.0/examples/jsm/"
+        }
+    }
+    </script>
+    <script type="module" src="plane.js"></script>
+</body>
+</html>

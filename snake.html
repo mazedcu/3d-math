@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Snake 3D</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <style>
+        .stat-timer { border-color: rgba(244, 63, 94, 0.2); background: rgba(255, 255, 255, 0.85); }
+        .stat-timer .stat-val { color: var(--rose); font-size: 1.8rem; }
+        
+        .stat-enemy { border-color: rgba(245, 158, 11, 0.2); }
+        .stat-enemy .stat-val { color: var(--amber); }
+        
+        .stat-player { border-color: rgba(16, 185, 129, 0.2); }
+        .stat-player .stat-val { color: var(--emerald); }
+
+        .stat-target { border-color: rgba(6, 182, 212, 0.4); }
+        .stat-target .stat-val { color: var(--cyan, #06b6d4); font-size: 1.8rem; }
+
+        #game-over {
+            position: fixed; inset: 0; z-index: 200;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: rgba(26,26,46,0.85); backdrop-filter: blur(12px);
+            opacity: 0; pointer-events: none; transition: opacity 0.5s;
+        }
+        #game-over.show { opacity: 1; pointer-events: all; }
+        
+        .go-title { font-size: 4rem; font-weight: 900; margin-bottom: 20px; }
+        .go-title.win { color: var(--emerald); text-shadow: 0 0 20px rgba(16,185,129,0.5); }
+        .go-title.lose { color: var(--rose); text-shadow: 0 0 20px rgba(244,63,94,0.5); }
+        
+        .go-desc { font-size: 1.2rem; color: white; margin-bottom: 30px; text-align: center; max-width: 400px; }
+
+        #choice-screen {
+            position: fixed; bottom: 28px; left: 24px; z-index: 300;
+            display: flex; flex-direction: column; gap: 10px;
+            background: var(--surface); backdrop-filter: blur(16px);
+            border: 1px solid var(--border); border-radius: 18px;
+            padding: 16px 20px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+            transition: opacity 0.4s, transform 0.4s;
+        }
+        #choice-screen.hidden { opacity: 0; transform: translateY(20px); pointer-events: none; }
+        .choice-title { font-size: 1rem; font-weight: 800; color: var(--text); }
+        .choice-desc { font-size: 0.75rem; color: var(--dim); line-height: 1.5; }
+        .choice-btns { display: flex; gap: 10px; }
+        .choice-btn {
+            font-size: 1rem; font-weight: 800; padding: 10px 26px;
+            border-radius: 12px; cursor: pointer; border: none;
+            transition: transform 0.15s;
+        }
+        .choice-btn:hover { transform: scale(1.06); }
+        .choice-btn.even { background: var(--emerald, #10b981); color: white; }
+        .choice-btn.odd { background: var(--amber, #f59e0b); color: white; }
+    </style>
+</head>
+<body>
+    <canvas id="c"></canvas>
+
+    <!-- HUD -->
+    <div id="hud" class="hud">
+        <div class="hud-left">
+            <div class="stat stat-target">
+                <div class="stat-val" id="s-target">?</div>
+                <div class="stat-lbl">Eat These!</div>
+            </div>
+            <div class="stat stat-player">
+                <div class="stat-val" id="s-player">5</div>
+                <div class="stat-lbl">Your Size</div>
+            </div>
+            <div class="stat stat-timer">
+                <div class="stat-val" id="s-time">60</div>
+                <div class="stat-lbl">Seconds Left</div>
+            </div>
+            <div class="stat stat-enemy">
+                <div class="stat-val" id="s-enemy">5</div>
+                <div class="stat-lbl">Enemy Size</div>
+            </div>
+        </div>
+        <div class="hud-right">
+            <h1 class="title"><span style="color:var(--emerald)">MATH</span><span class="t2">SNAKE</span></h1>
+            <a href="index.html" class="btn" style="text-decoration:none; display:flex; align-items:center;">🏠 Menu</a>
+        </div>
+    </div>
+
+    <!-- Choice Screen -->
+    <div id="choice-screen">
+        <div class="choice-title">Pick Your Numbers!</div>
+        <div class="choice-desc">Right numbers grow you (+1), wrong ones shrink you (-1)</div>
+        <div class="choice-btns">
+            <button class="choice-btn even" id="btn-even">EVEN</button>
+            <button class="choice-btn odd" id="btn-odd">ODD</button>
+        </div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="game-over">
+        <div class="go-title" id="go-title">YOU WIN!</div>
+        <div class="go-desc" id="go-desc">You ate the boss snake!</div>
+        <button class="btn primary" onclick="location.reload()" style="font-size:1.2rem; padding: 16px 32px;">Play Again</button>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.163.0/examples/jsm/"
+        }
+    }
+    </script>
+    <script type="module" src="snake.js?v=9"></script>
+</body>
+</html>

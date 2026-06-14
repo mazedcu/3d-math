@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fraction Bridge 3D - Deluxe</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <style>
+        :root {
+            --bg: #0f172a;
+            --emerald: #10b981;
+            --emerald-glow: rgba(16, 185, 129, 0.4);
+            --amber: #f59e0b;
+            --amber-glow: rgba(245, 158, 11, 0.4);
+            --cyan: #06b6d4;
+            --cyan-glow: rgba(6, 182, 212, 0.4);
+            --rose: #f43f5e;
+            --rose-glow: rgba(244, 63, 94, 0.4);
+        }
+
+        body { 
+            background: var(--bg); 
+            margin: 0; 
+            overflow: hidden; 
+            font-family: 'Outfit', sans-serif;
+            user-select: none;
+        }
+
+        #c { width: 100vw; height: 100vh; display: block; }
+
+        /* HUD Components */
+        .hud { position: fixed; top: 0; left: 0; right: 0; padding: 24px; display: flex; justify-content: space-between; pointer-events: none; z-index: 100; }
+        .hud-left { display: flex; gap: 16px; pointer-events: auto; }
+        .hud-right { display: flex; flex-direction: column; align-items: flex-end; gap: 12px; pointer-events: auto; }
+
+        .stat {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 12px 20px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .stat:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(0,0,0,0.4); }
+
+        .stat-level { border-bottom: 3px solid var(--emerald); }
+        .stat-level .stat-val { color: var(--emerald); text-shadow: 0 0 10px var(--emerald-glow); }
+
+        .stat-gap { border-bottom: 3px solid var(--amber); }
+        .stat-gap .stat-val { color: var(--amber); text-shadow: 0 0 10px var(--amber-glow); font-size: 1.8rem; }
+
+        .stat-len { border-bottom: 3px solid var(--cyan); }
+        .stat-len .stat-val { color: var(--cyan); text-shadow: 0 0 10px var(--cyan-glow); font-size: 1.8rem; }
+
+        .stat-val { font-family: 'JetBrains Mono', monospace; font-size: 1.6rem; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+        .stat-lbl { font-size: 0.75rem; font-weight: 600; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 1px; }
+
+        .title-box {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 12px 24px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+        .title { margin: 0; font-size: 1.8rem; font-weight: 900; letter-spacing: 1px; }
+
+        .btn {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white; padding: 10px 20px; border-radius: 12px;
+            font-weight: 700; font-size: 0.95rem; cursor: pointer;
+            transition: all 0.2s; text-decoration: none; display: inline-block;
+        }
+        .btn:hover { background: rgba(255,255,255,0.2); transform: scale(1.05); }
+
+        /* Action Bar */
+        #action-bar {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 60;
+            display: flex; gap: 16px; align-items: center;
+            background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(16px);
+            border: 1px solid rgba(255,255,255,0.15); border-radius: 20px;
+            padding: 16px 24px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+            transition: opacity 0.4s, transform 0.4s;
+        }
+        #action-bar.hidden { opacity: 0; transform: translate(-50%, 20px); pointer-events: none; }
+        
+        .ab-btn {
+            padding: 14px 28px; border-radius: 14px; cursor: pointer; border: none;
+            font-weight: 800; font-size: 1.05rem; transition: transform 0.15s, box-shadow 0.15s;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+        .ab-btn:active { transform: scale(0.95); }
+        .ab-btn:hover { transform: scale(1.05); }
+
+        .ab-test { background: linear-gradient(135deg, #10b981, #059669); color: white; box-shadow: 0 4px 15px var(--emerald-glow); }
+        .ab-saw { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; box-shadow: 0 4px 15px var(--amber-glow); }
+        .ab-saw.active { background: linear-gradient(135deg, #f43f5e, #e11d48); box-shadow: 0 4px 20px var(--rose-glow); animation: pulse 1.5s infinite; }
+        .ab-reset { background: rgba(255,255,255,0.05); color: white; border: 1px solid rgba(255,255,255,0.2); }
+        .ab-reset:hover { background: rgba(255,255,255,0.15); }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(244, 63, 94, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
+        }
+
+        #saw-hint {
+            position: absolute; top: -45px; left: 50%; transform: translateX(-50%);
+            background: var(--rose); color: white; padding: 6px 14px; border-radius: 8px;
+            font-size: 0.85rem; font-weight: 700; white-space: nowrap;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s;
+        }
+        #saw-hint.show { opacity: 1; }
+        #saw-hint::after {
+            content: ''; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%);
+            border-width: 6px 6px 0; border-style: solid; border-color: var(--rose) transparent transparent transparent;
+        }
+
+        /* Modals (Start / Result) */
+        .modal-overlay {
+            position: fixed; inset: 0; z-index: 200;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(8px);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.4s;
+        }
+        .modal-overlay.show { opacity: 1; pointer-events: all; }
+
+        .modal {
+            background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 24px; padding: 40px; max-width: 500px; text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            transform: scale(0.9); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .modal-overlay.show .modal { transform: scale(1); }
+
+        .m-icon { font-size: 4rem; margin-bottom: 16px; line-height: 1; }
+        .m-title { font-size: 2.2rem; font-weight: 900; margin-bottom: 16px; letter-spacing: 1px; }
+        .m-title.emerald { color: var(--emerald); }
+        .m-title.rose { color: var(--rose); }
+        
+        .m-desc { font-size: 1.05rem; color: rgba(255,255,255,0.8); line-height: 1.6; margin-bottom: 30px; }
+        .m-desc strong { color: white; }
+
+        .m-btn {
+            font-size: 1.2rem; font-weight: 800; padding: 16px 40px;
+            border-radius: 16px; cursor: pointer; border: none;
+            background: linear-gradient(135deg, #10b981, #059669); color: white;
+            box-shadow: 0 8px 25px var(--emerald-glow);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .m-btn:hover { transform: scale(1.05); box-shadow: 0 12px 35px var(--emerald-glow); }
+        .m-btn.rose-btn { background: linear-gradient(135deg, #f43f5e, #e11d48); box-shadow: 0 8px 25px var(--rose-glow); }
+        .m-btn.rose-btn:hover { box-shadow: 0 12px 35px var(--rose-glow); }
+
+        /* Floating text feedback */
+        .float-text {
+            position: fixed; pointer-events: none; z-index: 300;
+            font-family: 'JetBrains Mono', monospace; font-weight: 900; font-size: 2rem;
+            color: white; text-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            transform: translate(-50%, -50%);
+            animation: floatUp 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes floatUp {
+            0% { opacity: 0; transform: translate(-50%, -30%) scale(0.5); }
+            20% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+            80% { opacity: 1; transform: translate(-50%, -80%) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -100%) scale(0.9); }
+        }
+
+    </style>
+</head>
+<body>
+    <canvas id="c"></canvas>
+
+    <!-- HUD -->
+    <div id="hud" class="hud">
+        <div class="hud-left">
+            <div class="stat stat-level">
+                <div class="stat-val" id="s-level">1</div>
+                <div class="stat-lbl">Level</div>
+            </div>
+            <div class="stat stat-gap">
+                <div class="stat-val" id="s-gap">1/2</div>
+                <div class="stat-lbl">Target Gap</div>
+            </div>
+            <div class="stat stat-len">
+                <div class="stat-val" id="s-len">0</div>
+                <div class="stat-lbl">Bridge Length</div>
+            </div>
+        </div>
+        <div class="hud-right">
+            <div class="title-box">
+                <h1 class="title"><span style="color:var(--emerald)">FRACTION</span><span style="color:var(--amber)">BRIDGE</span></h1>
+            </div>
+            <a href="index.html" class="btn">🏠 Back to Hub</a>
+        </div>
+    </div>
+
+    <!-- Start Screen -->
+    <div id="start-screen" class="modal-overlay show">
+        <div class="modal">
+            <div class="m-icon">🌉</div>
+            <div class="m-title emerald">Fraction Bridge</div>
+            <div class="m-desc">
+                A canyon divides the cliffs. The gap is an exact fraction wide.<br><br>
+                🪵 <strong>Drag planks</strong> to the gap to build a bridge.<br>
+                🪚 Click the <strong>Saw</strong> to cut planks perfectly in half.<br><br>
+                When you think the bridge is exactly the right length, click <strong>Test Bridge</strong> to send the traveler across!
+            </div>
+            <button class="m-btn" id="btn-start">LET'S BUILD!</button>
+        </div>
+    </div>
+
+    <!-- Action Bar -->
+    <div id="action-bar" class="hidden">
+        <div id="saw-hint">Click a plank to cut it!</div>
+        <button class="ab-btn ab-test" id="btn-test">Test Bridge</button>
+        <button class="ab-btn ab-saw" id="btn-saw">🪚 Saw</button>
+        <button class="ab-btn ab-reset" id="btn-reset">Reset Planks</button>
+    </div>
+
+    <!-- Result Screen -->
+    <div id="result-screen" class="modal-overlay">
+        <div class="modal">
+            <div class="m-icon" id="res-icon">🎉</div>
+            <div class="m-title emerald" id="res-title">PERFECT!</div>
+            <div class="m-desc" id="res-desc">Your bridge matched the gap exactly! The traveler crossed safely.</div>
+            <button class="m-btn" id="btn-next">Next Level</button>
+        </div>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.163.0/examples/jsm/"
+        }
+    }
+    </script>
+    <script type="module" src="bridge.js?v=2"></script>
+</body>
+</html>

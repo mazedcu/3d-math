@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laser Mirrors</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <style>
+        body {
+            background-color: #020617;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+            color: #f8fafc;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-image: 
+                linear-gradient(rgba(30, 41, 59, 0.5) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(30, 41, 59, 0.5) 1px, transparent 1px);
+            background-size: 50px 50px;
+        }
+
+        .header {
+            margin-top: 20px;
+            text-align: center;
+            z-index: 10;
+        }
+
+        .game-area {
+            position: relative;
+            width: 800px;
+            height: 500px;
+            margin-top: 20px;
+            border: 2px solid #334155;
+            background: rgba(15, 23, 42, 0.8);
+            border-radius: 20px;
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            overflow: hidden;
+        }
+
+        /* Laser Source */
+        .laser-source {
+            position: absolute;
+            left: 50px;
+            top: 225px;
+            width: 50px;
+            height: 50px;
+            background: #475569;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #94a3b8;
+        }
+        .laser-source::after {
+            content: '';
+            width: 20px;
+            height: 10px;
+            background: #ef4444;
+            position: absolute;
+            right: -10px;
+            border-radius: 0 5px 5px 0;
+        }
+
+        /* Target */
+        .target {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: rgba(234, 179, 8, 0.2);
+            border: 3px dashed #eab308;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+        .target.hit {
+            background: rgba(234, 179, 8, 0.8);
+            box-shadow: 0 0 30px #eab308;
+            border-style: solid;
+        }
+
+        /* Mirror */
+        .mirror-container {
+            position: absolute;
+            left: 375px;
+            top: 225px;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .mirror {
+            width: 80px;
+            height: 6px;
+            background: #38bdf8;
+            box-shadow: 0 0 15px #38bdf8;
+            border-radius: 3px;
+            transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform: rotate(0deg);
+        }
+
+        /* Laser Beams */
+        .beam-in {
+            position: absolute;
+            left: 100px;
+            top: 247px; /* 225 + 25 - 3 */
+            height: 6px;
+            background: #ef4444;
+            box-shadow: 0 0 15px #ef4444, 0 0 30px #ef4444;
+            width: 0;
+            transition: width 0.2s linear;
+        }
+
+        .beam-out {
+            position: absolute;
+            left: 400px;
+            top: 250px;
+            height: 6px;
+            background: #ef4444;
+            box-shadow: 0 0 15px #ef4444, 0 0 30px #ef4444;
+            width: 0;
+            transform-origin: 0 50%;
+            transition: width 0.3s linear 0.2s;
+        }
+
+        .controls {
+            margin-top: 30px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .btn-angle {
+            background: #1e293b;
+            color: white;
+            border: 2px solid #475569;
+            border-radius: 12px;
+            padding: 15px 25px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-angle:hover {
+            background: #334155;
+            border-color: #94a3b8;
+            transform: translateY(-2px);
+        }
+
+        .btn-fire {
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 15px 40px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #b91c1c;
+            margin-left: 20px;
+        }
+        .btn-fire:active {
+            transform: translateY(6px);
+            box-shadow: 0 0 0 #b91c1c;
+        }
+
+        .angle-display {
+            font-size: 2rem;
+            font-family: 'JetBrains Mono', monospace;
+            color: #38bdf8;
+            background: rgba(0,0,0,0.5);
+            padding: 10px 20px;
+            border-radius: 10px;
+            min-width: 100px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <a href="index.html" class="btn" id="nav-btn" style="text-decoration:none; z-index: 50; position: absolute; top: 20px; left: 20px;">🏠 Menu</a>
+
+    <div class="header">
+        <div style="font-size: 1.2rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 2px;">Set the mirror angle to hit the target!</div>
+        <div style="margin-top: 10px; font-size: 1.5rem; font-weight: bold; color: #fde047;">Score: <span id="score">0</span></div>
+    </div>
+
+    <div class="game-area">
+        <div class="laser-source"></div>
+        <div class="target" id="target">⭐</div>
+        
+        <div class="beam-in" id="beam-in"></div>
+        <div class="beam-out" id="beam-out"></div>
+
+        <div class="mirror-container">
+            <div class="mirror" id="mirror"></div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button class="btn-angle" onclick="changeAngle(-15)">-15°</button>
+        <button class="btn-angle" onclick="changeAngle(-45)">-45°</button>
+        
+        <div class="angle-display"><span id="angle-val">0</span>°</div>
+        
+        <button class="btn-angle" onclick="changeAngle(45)">+45°</button>
+        <button class="btn-angle" onclick="changeAngle(15)">+15°</button>
+
+        <button class="btn-fire" id="btn-fire">FIRE LASER</button>
+    </div>
+
+    <!-- Announcement Modal -->
+    <div class="overlay visible" id="announcement-overlay" style="z-index: 100;">
+        <div class="count-box" style="background: #0f172a; border-color: #ef4444;">
+            <div class="count-emoji">🪞</div>
+            <div class="count-title" style="font-size: 2rem; color: #ef4444;">LASER MIRRORS</div>
+            <div class="count-result" style="margin-bottom: 20px; color: rgba(255,255,255,0.7); font-size: 1.1rem;">
+                Adjust the mirror's angle to reflect the laser beam into the target!
+            </div>
+            <button class="btn primary" id="btn-start" style="width: 100%; background: #ef4444; border: none; color: white; box-shadow: 0 6px 0 #b91c1c;">ACTIVATE</button>
+        </div>
+    </div>
+
+    <script src="laser.js"></script>
+</body>
+</html>

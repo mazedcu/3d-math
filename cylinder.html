@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Graduated Cylinder</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <style>
+        body {
+            background-color: #0f172a;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            color: white;
+            margin: 0;
+            background-image: radial-gradient(circle at top, #1e293b 0%, #0f172a 100%);
+        }
+        .header { margin-top: 20px; text-align: center; }
+
+        .lab-area {
+            position: relative;
+            width: 400px;
+            height: 500px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            margin-top: 20px;
+        }
+
+        .cylinder {
+            position: relative;
+            width: 100px;
+            height: 400px;
+            border: 4px solid rgba(255,255,255,0.8);
+            border-top: none;
+            border-radius: 0 0 20px 20px;
+            background: rgba(255,255,255,0.1);
+            overflow: hidden;
+            z-index: 5;
+        }
+
+        .liquid {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 0%;
+            background: #06b6d4;
+            transition: height 0.3s ease-out;
+            box-shadow: inset 0 10px 20px rgba(255,255,255,0.4);
+        }
+
+        .target-line {
+            position: absolute;
+            left: -20px;
+            width: 140px;
+            height: 4px;
+            background: #ef4444;
+            z-index: 10;
+        }
+
+        .target-label {
+            position: absolute;
+            right: -80px;
+            color: #ef4444;
+            font-weight: bold;
+            font-size: 1.5rem;
+            transform: translateY(-50%);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .controls {
+            margin-top: 30px;
+            display: flex;
+            gap: 20px;
+        }
+
+        .btn-pour {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.5rem;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #2563eb;
+        }
+        .btn-pour:active { transform: translateY(6px); box-shadow: 0 0 0 #2563eb; }
+
+        .btn-check {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.5rem;
+            border-radius: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #059669;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="btn" style="position: absolute; top: 20px; left: 20px;">🏠 Menu</a>
+    
+    <div class="header">
+        <h1 style="color: #06b6d4; margin: 0;">GRADUATED CYLINDER</h1>
+        <p style="color: #94a3b8; margin-top: 5px;">Add exactly the right amount of liquid to reach the target!</p>
+        <div style="font-size: 1.2rem; color: #fde047;">Score: <span id="score">0</span></div>
+    </div>
+
+    <div class="lab-area">
+        <div class="cylinder" id="cylinder">
+            <div class="liquid" id="liquid"></div>
+        </div>
+        <div class="target-line" id="target-line">
+            <div class="target-label" id="target-label">1.25L</div>
+        </div>
+    </div>
+
+    <div style="font-size: 2rem; color: #fff; font-family: 'JetBrains Mono', monospace; margin-top: 20px;">Current: <span id="current-val">0.00</span>L</div>
+
+    <div class="controls">
+        <button class="btn-pour" onclick="pour(0.1)">+0.1L</button>
+        <button class="btn-pour" onclick="pour(0.25)">+0.25L</button>
+        <button class="btn-pour" onclick="pour(0.5)">+0.5L</button>
+    </div>
+    
+    <button class="btn-check" id="btn-check">SUBMIT MIXTURE</button>
+
+    <script src="cylinder.js"></script>
+</body>
+</html>

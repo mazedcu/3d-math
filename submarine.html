@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submarine Depths</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <style>
+        body {
+            background-color: #020617;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+            color: #f8fafc;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-image: linear-gradient(180deg, #0284c7 0%, #0c4a6e 40%, #020617 100%);
+        }
+
+        .water-surface {
+            position: absolute;
+            top: 10%;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.4);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+            z-index: 1;
+        }
+
+        .depth-marker {
+            position: absolute;
+            left: 20px;
+            font-family: 'JetBrains Mono', monospace;
+            color: rgba(255,255,255,0.5);
+            font-size: 1.2rem;
+            z-index: 1;
+        }
+
+        .header {
+            margin-top: 20px;
+            text-align: center;
+            z-index: 10;
+        }
+
+        .prompt-box {
+            background: rgba(15, 23, 42, 0.8);
+            border: 2px solid #38bdf8;
+            border-radius: 20px;
+            padding: 20px 40px;
+            margin-top: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .prompt-text {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #e0f2fe;
+            margin-bottom: 10px;
+        }
+
+        .submarine-container {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 200px;
+            height: 100px;
+            z-index: 5;
+            transition: top 1s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        .sub-svg {
+            width: 100%;
+            height: 100%;
+            animation: bob 3s ease-in-out infinite;
+        }
+
+        @keyframes bob {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .bubbles {
+            position: absolute;
+            right: -20px;
+            top: 40px;
+            width: 20px;
+            height: 20px;
+            background: rgba(255,255,255,0.6);
+            border-radius: 50%;
+            opacity: 0;
+        }
+
+        .bubble-anim {
+            animation: rise 2s ease-in forwards;
+        }
+
+        @keyframes rise {
+            0% { transform: translate(0, 0) scale(1); opacity: 0.8; }
+            100% { transform: translate(20px, -100px) scale(2); opacity: 0; }
+        }
+
+        .answers-grid {
+            position: absolute;
+            bottom: 40px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            z-index: 10;
+        }
+
+        .btn-answer {
+            background: #0ea5e9;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 20px 30px;
+            font-size: 2rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #0284c7;
+            transition: all 0.2s;
+        }
+
+        .btn-answer:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 0 #0284c7;
+            background: #38bdf8;
+        }
+
+        .btn-answer:active {
+            transform: translateY(6px);
+            box-shadow: 0 0 0 #0284c7;
+        }
+
+        /* Screen flash for errors */
+        .flash-red {
+            animation: flashR 0.5s ease-out forwards;
+        }
+        @keyframes flashR {
+            0% { box-shadow: inset 0 0 100px #ef4444; }
+            100% { box-shadow: inset 0 0 0 transparent; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <a href="index.html" class="btn" id="nav-btn" style="text-decoration:none; z-index: 50; position: absolute; top: 20px; left: 20px;">🏠 Menu</a>
+
+    <div class="water-surface"></div>
+    <div class="depth-marker" style="top: 10%;">0m (Sea Level)</div>
+    <div class="depth-marker" style="top: 30%;">-200m</div>
+    <div class="depth-marker" style="top: 50%;">-400m</div>
+    <div class="depth-marker" style="top: 70%;">-600m</div>
+    <div class="depth-marker" style="top: 90%;">-800m</div>
+
+    <div class="header">
+        <div class="prompt-box">
+            <div style="font-size: 1.2rem; color: #7dd3fc; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 2px;">Target Depth</div>
+            <div class="prompt-text" id="question-text">Currently at -50m. Drop 30m.</div>
+        </div>
+        <div style="margin-top: 15px; font-size: 1.5rem; font-weight: bold; color: #fde047;">Score: <span id="score">0</span></div>
+    </div>
+
+    <div class="submarine-container" id="submarine">
+        <svg class="sub-svg" viewBox="0 0 200 100">
+            <!-- Propeller -->
+            <path d="M180 40 L195 30 L195 70 L180 60 Z" fill="#94a3b8"/>
+            <rect x="175" y="45" width="10" height="10" fill="#cbd5e1"/>
+            
+            <!-- Hull -->
+            <rect x="20" y="30" width="160" height="40" rx="20" fill="#fde047"/>
+            <path d="M20 50 Q 20 70 40 70 L 160 70 Q 180 70 180 50 Z" fill="#eab308"/>
+            
+            <!-- Periscope / Top hatch -->
+            <rect x="70" y="10" width="40" height="20" rx="5" fill="#facc15"/>
+            <rect x="85" y="0" width="5" height="15" fill="#94a3b8"/>
+            <rect x="85" y="0" width="15" height="5" fill="#94a3b8"/>
+            
+            <!-- Windows -->
+            <circle cx="50" cy="50" r="10" fill="#0284c7" stroke="#cbd5e1" stroke-width="3"/>
+            <circle cx="90" cy="50" r="10" fill="#0284c7" stroke="#cbd5e1" stroke-width="3"/>
+            <circle cx="130" cy="50" r="10" fill="#0284c7" stroke="#cbd5e1" stroke-width="3"/>
+        </svg>
+        <div class="bubbles" id="bubble"></div>
+    </div>
+
+    <div class="answers-grid" id="answers">
+        <!-- Buttons injected by JS -->
+    </div>
+
+    <!-- Announcement Modal -->
+    <div class="overlay visible" id="announcement-overlay" style="z-index: 100;">
+        <div class="count-box" style="background: #0f172a; border-color: #38bdf8;">
+            <div class="count-emoji">⚓</div>
+            <div class="count-title" style="font-size: 2rem; color: #38bdf8;">SUBMARINE DEPTHS</div>
+            <div class="count-result" style="margin-bottom: 20px; color: rgba(255,255,255,0.7); font-size: 1.1rem;">
+                Calculate the new depth using negative numbers to safely navigate the sub!
+            </div>
+            <button class="btn primary" id="btn-start" style="width: 100%; background: #38bdf8; border: none; color: #0f172a; box-shadow: 0 6px 0 #0284c7;">DIVE IN</button>
+        </div>
+    </div>
+
+    <script src="submarine.js"></script>
+</body>
+</html>

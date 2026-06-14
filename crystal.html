@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crystal Carver</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <style>
+        body {
+            background-color: #2e1065;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            color: white;
+            margin: 0;
+            background-image: radial-gradient(circle at center, #4c1d95 0%, #2e1065 100%);
+        }
+
+        .header { margin-top: 20px; text-align: center; }
+
+        .grid-container {
+            position: relative;
+            width: 500px;
+            height: 500px;
+            background: #1e1b4b;
+            margin-top: 20px;
+            background-image: 
+                linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 50px 50px; /* 10x10 grid */
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+            border: 2px solid #5b21b6;
+            cursor: crosshair;
+        }
+
+        .axis-y {
+            position: absolute;
+            left: 250px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #a78bfa;
+            box-shadow: 0 0 10px #a78bfa;
+            pointer-events: none;
+        }
+
+        .point {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            background: #f43f5e;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 10px #f43f5e;
+            pointer-events: none;
+        }
+
+        .point-mirror {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            background: #10b981;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 10px #10b981;
+            pointer-events: none;
+        }
+
+        .svg-layer {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+        }
+
+        .crystal-path {
+            fill: rgba(244, 63, 94, 0.3);
+            stroke: #f43f5e;
+            stroke-width: 3;
+        }
+        
+        .mirror-path {
+            fill: rgba(16, 185, 129, 0.3);
+            stroke: #10b981;
+            stroke-width: 3;
+        }
+
+    </style>
+</head>
+<body>
+    <a href="index.html" class="btn" style="position: absolute; top: 20px; left: 20px;">🏠 Menu</a>
+    
+    <div class="header">
+        <h1 style="color: #c084fc; margin: 0;">CRYSTAL CARVER</h1>
+        <p style="color: #ddd6fe; margin-top: 5px;">Click on the right side to plot the perfectly symmetrical mirror points!</p>
+        <div style="font-size: 1.2rem; color: #fde047;">Score: <span id="score">0</span></div>
+    </div>
+
+    <div class="grid-container" id="grid">
+        <svg class="svg-layer" id="svg-layer">
+            <polygon class="crystal-path" id="poly-left" points=""></polygon>
+            <polygon class="mirror-path" id="poly-right" points=""></polygon>
+        </svg>
+        <div class="axis-y"></div>
+        <!-- Points injected by JS -->
+    </div>
+
+    <script src="crystal.js"></script>
+</body>
+</html>

@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Race — Speed Arithmetic</title>
+    <meta name="description" content="Race against the computer by solving math problems as fast as you can!">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <style>
+        .race-hud {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 30;
+            background: rgba(26, 26, 46, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 24px;
+            padding: 24px 36px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            width: 90%;
+            max-width: 500px;
+        }
+        .question {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .input-group {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
+        .answer-input {
+            flex-grow: 1;
+            padding: 12px 20px;
+            font-size: 1.5rem;
+            border-radius: 12px;
+            border: 2px solid rgba(255,255,255,0.2);
+            background: rgba(0,0,0,0.5);
+            color: white;
+            font-family: 'JetBrains Mono', monospace;
+            text-align: center;
+            outline: none;
+            transition: all 0.2s;
+        }
+        .answer-input:focus {
+            border-color: #f59e0b;
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);
+        }
+        .btn-submit {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 0 24px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(245, 158, 11, 0.4);
+            transition: all 0.2s;
+        }
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.6);
+        }
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            margin-top: 5px;
+            overflow: hidden;
+            position: relative;
+        }
+        .progress-fill {
+            height: 100%;
+            background: #3b82f6;
+            width: 0%;
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .progress-fill.pc {
+            background: #ef4444;
+        }
+        .progress-labels {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            font-size: 0.75rem;
+            color: rgba(255,255,255,0.6);
+            margin-bottom: 2px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="c"></canvas>
+
+    <!-- Top HUD -->
+    <div id="hud" class="hud">
+        <div class="hud-left">
+            <a href="index.html" class="btn" style="text-decoration:none;">🏠 Menu</a>
+        </div>
+        <div class="hud-right">
+            <h1 class="title"><span class="t1" style="color: #f59e0b;">MATH</span><span class="t2" style="color: #fcd34d;">RACE</span></h1>
+        </div>
+    </div>
+
+    <!-- Bottom HUD for Racing -->
+    <div class="race-hud">
+        <div style="width: 100%">
+            <div class="progress-labels">
+                <span style="color: #60a5fa">You</span>
+                <span>Finish</span>
+            </div>
+            <div class="progress-bar">
+                <div id="player-progress" class="progress-fill"></div>
+            </div>
+        </div>
+        <div style="width: 100%; margin-bottom: 10px;">
+            <div class="progress-labels">
+                <span style="color: #f87171">PC</span>
+                <span>Finish</span>
+            </div>
+            <div class="progress-bar">
+                <div id="pc-progress" class="progress-fill pc"></div>
+            </div>
+        </div>
+
+        <div id="question-text" class="question">Ready?</div>
+        
+        <div class="input-group">
+            <input type="number" id="answer-input" class="answer-input" placeholder="?" disabled autocomplete="off">
+            <button id="btn-submit" class="btn-submit" disabled>GO</button>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div class="notify" id="notify">
+        <span id="notify-text">Correct!</span>
+    </div>
+
+    <!-- Count Modal (used for Start/Restart) -->
+    <div class="overlay visible" id="start-overlay">
+        <div class="count-box">
+            <div class="count-emoji">🏁</div>
+            <div class="count-title" id="game-end-title">Race to 10!</div>
+            <div class="count-result" style="margin-bottom: 20px; color: rgba(0,0,0,0.7)">Solve math problems to move your car. First to 10 wins!</div>
+            <button class="btn primary" id="btn-start" style="width: 100%">START RACE</button>
+        </div>
+    </div>
+
+    <!-- Hurray -->
+    <div class="hurray" id="hurray">
+        <div class="hurray-text">YOU WIN!</div>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.163.0/examples/jsm/"
+        }
+    }
+    </script>
+    <script type="module" src="race.js"></script>
+</body>
+</html>

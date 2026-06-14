@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Percentage Space Launch</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <style>
+        html, body {
+            height: auto !important;
+            overflow: auto !important;
+            overflow-x: hidden !important;
+        }
+        
+        body {
+            background-color: #0f172a;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+            height: auto !important;
+            overflow-y: auto !important;
+            color: #f8fafc;
+            margin: 0;
+            padding: 0;
+            background-image: radial-gradient(circle at 50% 50%, #1e293b 0%, #020617 100%);
+        }
+
+        .stars {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            background: transparent url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><circle cx="20" cy="20" r="1.5" fill="white"/><circle cx="100" cy="80" r="1" fill="white"/><circle cx="170" cy="150" r="2" fill="white" opacity="0.8"/><circle cx="40" cy="180" r="1" fill="white" opacity="0.5"/></svg>') repeat;
+        }
+
+        /* Dark HUD styling */
+        .hud-left {
+            background: rgba(15, 23, 42, 0.9) !important;
+            border-color: #334155 !important;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5) !important;
+        }
+
+        .captain-panel {
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            background: rgba(30, 41, 59, 0.8);
+            padding: 10px 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            border: 2px solid #38bdf8;
+            z-index: 10;
+            backdrop-filter: blur(5px);
+            gap: 15px;
+            max-width: 600px;
+        }
+
+        .avatar-circle {
+            width: 60px;
+            height: 60px;
+            background: #0f172a;
+            border-radius: 50%;
+            border: 2px solid #38bdf8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            flex-shrink: 0;
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+        }
+
+        .dialogue-box {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .dialogue-name {
+            font-size: 0.8rem;
+            font-weight: 800;
+            color: #38bdf8;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 2px;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .dialogue-text {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #e2e8f0;
+            font-family: 'Outfit', sans-serif;
+            line-height: 1.3;
+        }
+
+        .dialogue-text span {
+            color: #fde047;
+            font-weight: 800;
+            text-shadow: 0 0 5px rgba(253, 224, 71, 0.5);
+        }
+
+        .game-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 900px;
+            margin-top: 5px; /* Reduced */
+            position: relative;
+            z-index: 5;
+        }
+
+        .svg-container {
+            width: 150px; /* Reduced (aspect ratio 250:400 = 5:8) */
+            height: 240px; /* Reduced */
+            position: relative;
+        }
+
+        /* SVG Animations */
+        .rocket-group {
+            transition: transform 1s ease-in;
+            transform-origin: center bottom;
+        }
+
+        .launching .rocket-group {
+            animation: rocketShake 0.2s infinite, rocketFly 2s forwards ease-in;
+            animation-delay: 0s, 0.5s; /* Shake first, then fly */
+        }
+
+        .fail .rocket-group {
+            animation: rocketShake 0.2s 4;
+        }
+
+        @keyframes rocketShake {
+            0% { transform: translate(0, 0); }
+            25% { transform: translate(2px, -2px); }
+            50% { transform: translate(-2px, 2px); }
+            75% { transform: translate(-2px, -2px); }
+            100% { transform: translate(2px, 2px); }
+        }
+
+        @keyframes rocketFly {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-1000px); }
+        }
+
+        .fire {
+            opacity: 0;
+            transition: opacity 0.2s;
+            transform-origin: 125px 330px;
+        }
+
+        .launching .fire {
+            opacity: 1;
+            animation: fireFlicker 0.1s infinite alternate;
+        }
+
+        @keyframes fireFlicker {
+            0% { transform: scaleY(1); }
+            100% { transform: scaleY(1.3); }
+        }
+
+        .smoke {
+            opacity: 0;
+        }
+
+        .fail .smoke {
+            animation: smokePuff 2s forwards;
+        }
+
+        @keyframes smokePuff {
+            0% { opacity: 0; transform: translateY(0) scale(1); }
+            20% { opacity: 1; transform: translateY(-20px) scale(1.5); }
+            100% { opacity: 0; transform: translateY(-100px) scale(3); }
+        }
+
+        .fuel-level {
+            transition: height 1s cubic-bezier(0.25, 1, 0.5, 1), y 1s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        .input-group {
+            margin-top: 5px; /* Reduced */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(30, 41, 59, 0.8);
+            padding: 5px 20px; /* Reduced */
+            border-radius: 15px;
+            border: 2px solid #475569;
+        }
+
+        .input-label {
+            font-size: 1rem; /* Reduced */
+            font-weight: 600;
+            margin-bottom: 5px; /* Reduced */
+            color: #94a3b8;
+        }
+
+        .input-group input {
+            width: 90px; /* Reduced */
+            height: 45px; /* Reduced */
+            font-size: 1.8rem; /* Reduced */
+            text-align: center;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            border: 3px solid #38bdf8;
+            border-radius: 10px;
+            outline: none;
+            transition: all 0.2s;
+            background: #0f172a;
+            color: #f8fafc;
+            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.2);
+        }
+
+        .input-group input:focus {
+            border-color: #fde047;
+            box-shadow: 0 0 20px rgba(253, 224, 71, 0.4);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 5px; /* Reduced */
+            margin-bottom: 5px; /* Reduced */
+            z-index: 20;
+        }
+
+        .btn-launch {
+            background: #ef4444;
+            color: white;
+            padding: 10px 40px; /* Reduced */
+            font-size: 1.4rem; /* Reduced */
+            font-weight: 800;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #b91c1c, 0 10px 15px rgba(0,0,0,0.3);
+            transition: all 0.1s;
+            font-family: 'Outfit', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .btn-launch:active {
+            transform: translateY(8px);
+            box-shadow: 0 0 0 #b91c1c, 0 5px 10px rgba(0,0,0,0.3);
+        }
+        
+        .btn-launch:disabled {
+            background: #475569;
+            box-shadow: 0 8px 0 #334155;
+            cursor: not-allowed;
+            color: #94a3b8;
+            transform: none !important;
+        }
+
+        .error-msg {
+            position: absolute;
+            top: 200px;
+            color: #fca5a5;
+            font-weight: bold;
+            font-size: 1.5rem;
+            background: rgba(15, 23, 42, 0.95);
+            padding: 15px 30px;
+            border-radius: 10px;
+            border: 2px solid #ef4444;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            z-index: 30;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="stars"></div>
+    <a href="index.html" class="btn" id="nav-btn" style="text-decoration:none; z-index: 200; position: absolute; top: 20px; left: 20px;">🏠 Menu</a>
+
+    <!-- Top HUD -->
+    <div id="hud" class="hud" style="justify-content: flex-end; top: 5px;">
+        <div class="hud-left" style="background: rgba(255,255,255,0.9); padding: 5px 20px; border-radius: 20px; border: 2px solid #cbd5e1; gap: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+            <div class="stat accent" style="border: none; background: transparent; padding: 0;">
+                <div class="stat-val" id="score-p1" style="color: #38bdf8;">0</div>
+                <div class="stat-lbl" style="color: #38bdf8;">Player 1</div>
+            </div>
+            
+            <div class="stat" style="border: none; background: transparent; padding: 0; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                <div style="font-size: 1rem; font-weight: 800; color: #38bdf8; letter-spacing: 1px;" id="turn-indicator">P1'S TURN</div>
+                <div style="font-size: 0.7rem; font-weight: 600; color: #94a3b8; margin-top: 2px;">Mission <span id="try-count">1</span> / 5</div>
+            </div>
+
+            <div class="stat accent" style="border: none; background: transparent; padding: 0;">
+                <div class="stat-val" id="score-p2" style="color: #f43f5e;">0</div>
+                <div class="stat-lbl" style="color: #f43f5e;">Player 2</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Announcement Modal -->
+    <div class="overlay visible" id="announcement-overlay">
+        <div class="count-box" style="background: #1e293b; color: white;">
+            <div class="count-emoji" id="announce-emoji">🚀</div>
+            <div class="count-title" id="announce-title" style="font-size: 2rem; color: #38bdf8;">PLAYER 1</div>
+            <div class="count-result" id="announce-subtitle" style="margin-bottom: 20px; color: #94a3b8; font-size: 1.1rem;">
+                Get ready for your 5 missions!
+            </div>
+            <button class="btn primary" id="btn-start" style="width: 100%; background: #38bdf8; color: #0f172a; border: none; box-shadow: 0 6px 0 #0284c7;">START</button>
+        </div>
+    </div>
+
+    <div class="captain-panel">
+        <div class="avatar-circle">👨‍🚀</div>
+        <div class="dialogue-box">
+            <div class="dialogue-name">CAPTAIN ATLAS</div>
+            <div class="dialogue-text">"Cadet! The tank holds <span id="capacity-text">20</span> cells. We need exactly <span id="percentage-text">40%</span> fuel to break orbit. Do the math!"</div>
+        </div>
+    </div>
+    
+    <div id="error-msg" class="error-msg">Incorrect. Try again!</div>
+
+    <div class="game-area">
+        <div class="svg-container" id="svg-rocket">
+            <svg viewBox="0 0 250 400" width="100%" height="100%">
+                <!-- Background Launchpad -->
+                <rect x="25" y="360" width="200" height="20" fill="#334155" rx="5" />
+                <rect x="50" y="380" width="150" height="20" fill="#1e293b" />
+                
+                <!-- Tower -->
+                <rect x="40" y="100" width="10" height="260" fill="#475569" />
+                <path d="M 50 120 L 80 120 L 80 130 L 50 130 Z" fill="#475569" />
+                <path d="M 50 200 L 80 200 L 80 210 L 50 210 Z" fill="#475569" />
+                
+                <!-- Rocket Group -->
+                <g class="rocket-group" id="rocket">
+                    <!-- Smoke (Fail animation) -->
+                    <g class="smoke" fill="#334155">
+                        <circle cx="100" cy="280" r="20" />
+                        <circle cx="150" cy="270" r="25" />
+                        <circle cx="125" cy="250" r="30" />
+                    </g>
+                    
+                    <!-- Fire (Launch animation) -->
+                    <g class="fire">
+                        <path d="M 105 330 L 125 390 L 145 330 Z" fill="#fde047" />
+                        <path d="M 115 330 L 125 370 L 135 330 Z" fill="#ef4444" />
+                    </g>
+                    
+                    <!-- Fins -->
+                    <path d="M 95 280 L 70 340 L 95 330 Z" fill="#e2e8f0" />
+                    <path d="M 155 280 L 180 340 L 155 330 Z" fill="#e2e8f0" />
+                    <path d="M 120 280 L 125 350 L 130 280 Z" fill="#94a3b8" />
+                    
+                    <!-- Body -->
+                    <rect x="95" y="120" width="60" height="210" fill="#f8fafc" rx="30" />
+                    
+                    <!-- Nose Cone -->
+                    <path d="M 95 120 Q 125 20 155 120 Z" fill="#ef4444" />
+                    
+                    <!-- Fuel Tank Window (Empty) -->
+                    <rect x="105" y="160" width="40" height="120" fill="#0f172a" rx="10" />
+                    
+                    <!-- Fuel Level (Green) -->
+                    <rect id="fuel-rect" class="fuel-level" x="105" y="280" width="40" height="0" fill="#22c55e" rx="10" />
+                    
+                    <!-- Glass reflection -->
+                    <rect x="108" y="165" width="8" height="110" fill="#ffffff" opacity="0.3" rx="4" />
+                    
+                    <!-- Decals -->
+                    <circle cx="125" cy="140" r="8" fill="#38bdf8" stroke="#0f172a" stroke-width="2" />
+                    <rect x="95" y="290" width="60" height="10" fill="#ef4444" />
+                </g>
+            </svg>
+        </div>
+
+        <div class="input-group">
+            <div class="input-label">Fuel Cells to Load:</div>
+            <input type="number" id="input-fuel" min="0" max="100" placeholder="0">
+        </div>
+    </div>
+
+    <div class="controls">
+        <button class="btn-launch" id="btn-launch">LAUNCH</button>
+    </div>
+
+    <script src="space.js"></script>
+</body>
+</html>

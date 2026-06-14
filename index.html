@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <style>
+        html, body {
+            height: auto !important;
+            overflow: auto !important;
+            overflow-x: hidden !important;
+        }
+        body {
+            display: flex;
+            align-items: center;
+            flex-direction: column;
+            background: #1a1a2e;
+            color: white;
+            padding: 60px 20px;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        .hub-title {
+            font-size: 3.5rem;
+            margin-bottom: 50px;
+            text-align: center;
+            letter-spacing: 2px;
+        }
+        .category {
+            width: 100%;
+            max-width: 1200px;
+            margin-bottom: 50px;
+        }
+        .category-title {
+            font-size: 2rem;
+            color: rgba(255,255,255,0.8);
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid rgba(255,255,255,0.1);
+            letter-spacing: 1px;
+        }
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 30px;
+        }
+        .card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 24px;
+            padding: 40px 30px;
+            text-align: center;
+            text-decoration: none;
+            color: white;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .card:hover {
+            transform: translateY(-8px);
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(255,255,255,0.3);
+            box-shadow: 0 16px 40px rgba(0,0,0,0.4);
+        }
+        .card-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            display: inline-block;
+        }
+        .card-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            letter-spacing: 1px;
+        }
+        .card-desc {
+            font-size: 0.95rem;
+            color: rgba(255,255,255,0.6);
+            line-height: 1.5;
+        }
+        
+        .card.blob .card-title { color: #06b6d4; }
+        .card.blob:hover { box-shadow: 0 16px 40px rgba(6, 182, 212, 0.2); }
+        
+        .card.snake .card-title { color: #10b981; }
+        .card.snake:hover { box-shadow: 0 16px 40px rgba(16, 185, 129, 0.2); }
+
+        .card.tiles .card-title { color: #7c3aed; }
+        .card.tiles:hover { box-shadow: 0 16px 40px rgba(124, 58, 237, 0.25); }
+
+        .card.wormhole .card-title { color: #00ff66; }
+        .card.wormhole:hover { box-shadow: 0 16px 40px rgba(0, 255, 102, 0.25); }
+
+        .card.aliens .card-title { color: #f43f5e; }
+        .card.aliens:hover { box-shadow: 0 16px 40px rgba(244, 63, 94, 0.25); }
+
+        .card.bridge .card-title { color: #f59e0b; }
+        .card.bridge:hover { box-shadow: 0 16px 40px rgba(245, 158, 11, 0.25); }
+
+        .card.missile .card-title { color: #3b82f6; }
+        .card.missile:hover { box-shadow: 0 16px 40px rgba(59, 130, 246, 0.25); }
+
+        .card.lcm .card-title { color: #a78bfa; }
+        .card.lcm:hover { box-shadow: 0 16px 40px rgba(167, 139, 250, 0.25); }
+
+        .card.race .card-title { color: #f59e0b; }
+        .card.race:hover { box-shadow: 0 16px 40px rgba(245, 158, 11, 0.25); }
+
+        .card.plane .card-title { color: #3b82f6; }
+        .card.plane:hover { box-shadow: 0 16px 40px rgba(59, 130, 246, 0.25); }
+
+        .card.ratio .card-title { color: #ef4444; }
+        .card.ratio:hover { box-shadow: 0 16px 40px rgba(239, 68, 68, 0.25); }
+
+        .card.space .card-title { color: #38bdf8; }
+        .card.space:hover { box-shadow: 0 16px 40px rgba(56, 189, 248, 0.25); }
+
+        .card.unitary .card-title { color: #c084fc; }
+        .card.unitary:hover { box-shadow: 0 16px 40px rgba(192, 132, 252, 0.25); }
+
+        .card.rationinja .card-title { color: #fde047; }
+        .card.rationinja:hover { box-shadow: 0 16px 40px rgba(253, 224, 71, 0.25); }
+
+        .card.submarine .card-title { color: #0ea5e9; }
+        .card.submarine:hover { box-shadow: 0 16px 40px rgba(14, 165, 233, 0.25); }
+
+        .card.laser .card-title { color: #ef4444; }
+        .card.laser:hover { box-shadow: 0 16px 40px rgba(239, 68, 68, 0.25); }
+
+        .card.slime .card-title { color: #34d399; }
+        .card.slime:hover { box-shadow: 0 16px 40px rgba(52, 211, 153, 0.25); }
+
+        .card.bomb .card-title { color: #ef4444; }
+        .card.bomb:hover { box-shadow: 0 16px 40px rgba(239, 68, 68, 0.25); }
+
+        .card.gacha .card-title { color: #fbbf24; }
+        .card.gacha:hover { box-shadow: 0 16px 40px rgba(251, 191, 36, 0.25); }
+
+        .card.balance .card-title { color: #f59e0b; }
+        .card.balance:hover { box-shadow: 0 16px 40px rgba(245, 158, 11, 0.25); }
+
+        .card.cylinder .card-title { color: #06b6d4; }
+        .card.cylinder:hover { box-shadow: 0 16px 40px rgba(6, 182, 212, 0.25); }
+
+        .card.asteroid .card-title { color: #22c55e; }
+        .card.asteroid:hover { box-shadow: 0 16px 40px rgba(34, 197, 94, 0.25); }
+
+        .card.train .card-title { color: #0284c7; }
+        .card.train:hover { box-shadow: 0 16px 40px rgba(2, 132, 199, 0.25); }
+
+        .card.crystal .card-title { color: #c084fc; }
+        .card.crystal:hover { box-shadow: 0 16px 40px rgba(192, 132, 252, 0.25); }
+    </style>
+</head>
+<body>
+    <h1 class="hub-title">3D MATH GAMES</h1>
+    <div class="category">
+        <h2 class="category-title">🔢 Numbers & Logic</h2>
+        <div class="cards">
+            <a href="bomb.html" class="card bomb">
+                <div class="card-icon">💣</div>
+                <div class="card-title">BOMB DEFUSAL</div>
+                <div class="card-desc">Cut the correct wire by following the Order of Operations (PEMDAS)!</div>
+            </a>
+            <a href="train.html" class="card train">
+                <div class="card-icon">🚂</div>
+                <div class="card-title">TRAIN CONDUCTOR</div>
+                <div class="card-desc">Calculate the exact arrival time of the train based on its schedule!</div>
+            </a>
+            <a href="submarine.html" class="card submarine">
+                <div class="card-icon">⚓</div>
+                <div class="card-title">SUBMARINE DEPTHS</div>
+                <div class="card-desc">Calculate negative numbers to safely navigate the submarine's depth!</div>
+            </a>
+            <a href="lcm.html" class="card lcm">
+                <div class="card-icon">🐸</div>
+                <div class="card-title">FROG LCM</div>
+                <div class="card-desc">Two frogs jump by different lengths — guess where they first land together!</div>
+            </a>
+            <a href="blob.html" class="card blob">
+                <div class="card-icon">🔵</div>
+                <div class="card-title">BLOBMERGE</div>
+                <div class="card-desc">Group identical balls into 10s and solve the total count challenge!</div>
+            </a>
+            <a href="unitary.html" class="card unitary">
+                <div class="card-icon">🧪</div>
+                <div class="card-title">POTION SHOP</div>
+                <div class="card-desc">Sell potions to the wizard! Calculate the unit price before finding the total.</div>
+            </a>
+            <a href="snake.html" class="card snake">
+                <div class="card-icon">🐍</div>
+                <div class="card-title">MATH SNAKE</div>
+                <div class="card-desc">Grow by eating even numbers, shrink on odds! Face the boss at 60s!</div>
+            </a>
+            <a href="wormhole.html" class="card wormhole">
+                <div class="card-icon">🌀</div>
+                <div class="card-title">WORMHOLE</div>
+                <div class="card-desc">Fly through a Matrix-style wormhole — dodge the deadly prime numbers!</div>
+            </a>
+            <a href="race.html" class="card race">
+                <div class="card-icon">🏎️</div>
+                <div class="card-title">MATH RACE</div>
+                <div class="card-desc">Race a PC car to the finish line by solving 10 math problems quickly!</div>
+            </a>
+            <a href="plane.html" class="card plane">
+                <div class="card-icon">✈️</div>
+                <div class="card-title">BIPLANE MULTIPLES</div>
+                <div class="card-desc">Fly a WWI biplane! Shoot the non-multiples and fly safely through the correct ones!</div>
+            </a>
+        </div>
+    </div>
+
+    <div class="category">
+        <h2 class="category-title">🍕 Fractions & Proportions</h2>
+        <div class="cards">
+            <a href="gacha.html" class="card gacha">
+                <div class="card-icon">🎰</div>
+                <div class="card-title">MONSTER GACHA</div>
+                <div class="card-desc">Calculate the correct probability fraction of winning the colored monster!</div>
+            </a>
+            <a href="cylinder.html" class="card cylinder">
+                <div class="card-icon">🧪</div>
+                <div class="card-title">CYLINDER MIXER</div>
+                <div class="card-desc">Add exact decimal measurements of liquid to reach the target line!</div>
+            </a>
+            <a href="ratio-ninja.html" class="card rationinja">
+                <div class="card-icon">⚔️</div>
+                <div class="card-title">RATIO NINJA</div>
+                <div class="card-desc">Slice numbers with your sword to find the simplest form of the ratio!</div>
+            </a>
+            <a href="aliens.html" class="card aliens">
+                <div class="card-icon">👾</div>
+                <div class="card-title">MATH ALIEN</div>
+                <div class="card-desc">Solve fractions & percentages to power up your gun and blast the invasion!</div>
+            </a>
+            <a href="bridge.html" class="card bridge">
+                <div class="card-icon">🌉</div>
+                <div class="card-title">FRACTION BRIDGE</div>
+                <div class="card-desc">Drag wooden planks to build a bridge — the total must match the gap!</div>
+            </a>
+            <a href="ratio.html" class="card ratio">
+                <div class="card-icon">🍎</div>
+                <div class="card-title">RATIO APPLES</div>
+                <div class="card-desc">Divide the apples between the children according to the exact ratio!</div>
+            </a>
+            <a href="space.html" class="card space">
+                <div class="card-icon">🚀</div>
+                <div class="card-title">PERCENT SPACE LAUNCH</div>
+                <div class="card-desc">Calculate the correct percentage of fuel to launch the rocket into orbit!</div>
+            </a>
+        </div>
+    </div>
+
+    <div class="category">
+        <h2 class="category-title">🧮 Algebra & Pre-Algebra</h2>
+        <div class="cards">
+            <a href="balance.html" class="card balance">
+                <div class="card-icon">⚖️</div>
+                <div class="card-title">BALANCE SCALE</div>
+                <div class="card-desc">Solve for X by visually balancing the equation blocks!</div>
+            </a>
+            <a href="slime.html" class="card slime">
+                <div class="card-icon">🦠</div>
+                <div class="card-title">SLIME SPLITTER</div>
+                <div class="card-desc">Calculate Base and Exponent combinations to vaporize the slime!</div>
+            </a>
+        </div>
+    </div>
+
+    <div class="category">
+        <h2 class="category-title">📐 Geometry & Graphing</h2>
+        <div class="cards">
+            <a href="asteroid.html" class="card asteroid">
+                <div class="card-icon">☄️</div>
+                <div class="card-title">ASTEROID TRAJECTORY</div>
+                <div class="card-desc">Graph the correct line (Y = MX + B) to fire the laser and destroy the asteroid!</div>
+            </a>
+            <a href="crystal.html" class="card crystal">
+                <div class="card-icon">💎</div>
+                <div class="card-title">CRYSTAL CARVER</div>
+                <div class="card-desc">Plot mirrored coordinates on the grid to complete the symmetrical crystal!</div>
+            </a>
+            <a href="laser.html" class="card laser">
+                <div class="card-icon">🪞</div>
+                <div class="card-title">LASER MIRRORS</div>
+                <div class="card-desc">Adjust the mirror's angle to reflect the laser beam into the target!</div>
+            </a>
+            <a href="tiles.html" class="card tiles">
+                <div class="card-icon">🧱</div>
+                <div class="card-title">TILE MATH</div>
+                <div class="card-desc">Place 3D tiles on the floor to learn area, volume, and multiplication!</div>
+            </a>
+            <a href="missile.html" class="card missile">
+                <div class="card-icon">🚀</div>
+                <div class="card-title">DESTROY THE SHIP</div>
+                <div class="card-desc">Type the exact coordinates of the enemy ship to fire your missile!</div>
+            </a>
+        </div>
+    </div>
+</body>
+</html>
