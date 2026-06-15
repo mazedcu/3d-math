@@ -80,15 +80,21 @@ function generateRound() {
     promptEl.innerHTML = `What is the probability of getting a <span style="color:${colors.find(c=>c.name===targetColor).hex}; font-weight:bold;">${targetColor}</span> monster?`;
 }
 
-btnSubmit.addEventListener('click', () => {
+function checkAnswer() {
     let n = parseInt(numIn.value);
     let d = parseInt(denIn.value);
     
-    if (isNaN(n) || isNaN(d) || d === 0) return;
+    if (isNaN(n) || isNaN(d) || d === 0) {
+        document.body.classList.add('flash-red');
+        setTimeout(() => document.body.classList.remove('flash-red'), 300);
+        return;
+    }
     
-    if (n / d === targetCount / totalCount) {
+    if (n * totalCount === d * targetCount) {
         // Correct
         playCrank();
+        knob.style.transform = 'rotate(90deg)';
+        setTimeout(() => knob.style.transform = 'rotate(0deg)', 300);
         
         // Show prize
         setTimeout(() => {
@@ -103,9 +109,20 @@ btnSubmit.addEventListener('click', () => {
     } else {
         // Wrong
         playError();
+        document.body.classList.add('flash-red');
+        setTimeout(() => document.body.classList.remove('flash-red'), 500);
         score = Math.max(0, score - 5);
         scoreEl.innerText = score;
     }
+}
+
+btnSubmit.addEventListener('click', checkAnswer);
+knob.addEventListener('click', checkAnswer);
+
+[numIn, denIn].forEach(input => {
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') checkAnswer();
+    });
 });
 
 generateRound();
