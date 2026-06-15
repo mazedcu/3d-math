@@ -415,7 +415,7 @@
         <div class="card" style="width: 100%; max-width: 400px; position:relative;">
             <button onclick="closeModals()" style="position:absolute; top:15px; right:15px; background:none; border:none; color:var(--text-secondary); cursor:pointer; font-size:1.2rem;">&times;</button>
             <h3 style="margin-bottom: 20px; font-size: 1.5rem;">Reset Password</h3>
-            <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 0.9rem;">Enter your email and we'll provide a reset link.</p>
+            <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 0.9rem;">Enter your email and we'll send you a reset link.</p>
             <div class="form-group">
                 <label class="form-label">Email</label>
                 <input type="email" id="forgotEmail" class="form-control" placeholder="your@email.com">
@@ -549,6 +549,15 @@
             if (authStr) {
                 const auth = JSON.parse(authStr);
                 document.getElementById('auth-btn').innerText = 'Logout';
+            }
+
+            // If arriving from a password-reset email link, open the reset modal
+            const params = new URLSearchParams(window.location.search);
+            const resetToken = params.get('reset_token');
+            if (resetToken) {
+                openReset(resetToken);
+                // Clean the token out of the URL bar
+                history.replaceState(null, '', window.location.pathname);
             }
         };
 
@@ -700,11 +709,7 @@
                 const data = await res.json();
                 
                 resEl.style.color = "var(--success)";
-                if (data.demo_token) {
-                    resEl.innerHTML = `${data.message}<br><br><a href="#" onclick="openReset('${data.demo_token}')" style="color:var(--accent);">Click here to reset password (Demo)</a>`;
-                } else {
-                    resEl.innerText = data.message;
-                }
+                resEl.innerText = data.message;
                 resEl.style.display = 'block';
             } catch (err) {
                 resEl.style.color = "var(--danger)";

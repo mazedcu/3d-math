@@ -107,6 +107,47 @@ def send_approval_email(user, plan, end_date):
 </html>"""
     send_email_async(user.email, subject, text_body, html_body)
 
+
+def send_reset_email(user, token):
+    reset_link = f"{SITE_URL}/?reset_token={token}"
+    subject = 'Reset your Numberfield password'
+    text_body = (
+        f"Hi {user.name},\n\n"
+        f"We received a request to reset your Numberfield password.\n\n"
+        f"Click the link below to choose a new password:\n{reset_link}\n\n"
+        f"If you didn't request this, you can safely ignore this email \u2014 "
+        f"your password will stay the same.\n\n"
+        f"The Numberfield Team"
+    )
+    html_body = f"""\
+<!DOCTYPE html>
+<html>
+  <body style="margin:0;padding:0;background:#0d0524;font-family:Arial,Helvetica,sans-serif;color:#1a1a2e;">
+    <div style="max-width:520px;margin:0 auto;padding:32px 24px;">
+      <div style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,0.25);">
+        <div style="background:linear-gradient(135deg,#ff4ecd,#a855f7,#22d3ee);padding:28px 24px;text-align:center;">
+          <h1 style="margin:0;color:#fff;font-size:24px;">Numberfield</h1>
+        </div>
+        <div style="padding:28px 28px 32px;">
+          <h2 style="margin:0 0 12px;font-size:20px;color:#1a1a2e;">Reset your password</h2>
+          <p style="margin:0 0 14px;color:#444;font-size:15px;line-height:1.6;">Hi {user.name},</p>
+          <p style="margin:0 0 14px;color:#444;font-size:15px;line-height:1.6;">
+            We received a request to reset your Numberfield password. Click the button below to choose a new one.
+          </p>
+          <div style="text-align:center;margin:26px 0;">
+            <a href="{reset_link}" style="display:inline-block;background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff;text-decoration:none;font-weight:700;padding:14px 32px;border-radius:12px;font-size:15px;">Reset Password</a>
+          </div>
+          <p style="margin:0 0 14px;color:#888;font-size:13px;line-height:1.6;word-break:break-all;">
+            Or paste this link into your browser:<br><a href="{reset_link}" style="color:#a855f7;">{reset_link}</a>
+          </p>
+          <p style="margin:0;color:#888;font-size:13px;line-height:1.6;">If you didn't request this, you can safely ignore this email.</p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>"""
+    send_email_async(user.email, subject, text_body, html_body)
+
 basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'database.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -231,9 +272,11 @@ def forgot_password():
     token = str(uuid.uuid4())
     user.reset_token = token
     db.session.commit()
-    
-    # In a real app we'd email this. Here we return it for demo purposes:
-    return jsonify({"message": "If the email exists, a reset link has been provided.", "demo_token": token}), 200
+
+    # Email the reset link to the user (non-blocking)
+    send_reset_email(user, token)
+
+    return jsonify({"message": "If that email is registered, a password reset link has been sent. Please check your inbox."}), 200
 
 @app.route('/api/reset-password', methods=['POST'])
 def reset_password():
