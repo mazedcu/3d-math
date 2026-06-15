@@ -33,13 +33,13 @@
         <div class="pricing-grid">
             <div class="card pricing-card">
                 <h3>Monthly Plan</h3>
-                <div class="price">৳ 500<span>/month</span></div>
+                <div class="price">৳ 100<span>/month</span></div>
                 <p style="color: var(--text-secondary); margin-bottom: 20px;">Perfect for short-term learning and practice.</p>
                 <button onclick="openCheckout('monthly')" class="btn btn-outline" style="width: 100%;">Select Monthly</button>
             </div>
             <div class="card pricing-card popular">
                 <h3>Yearly Plan</h3>
-                <div class="price">৳ 4000<span>/year</span></div>
+                <div class="price">৳ 1000<span>/year</span></div>
                 <p style="color: var(--text-secondary); margin-bottom: 20px;">Save over 30% with our annual subscription.</p>
                 <button onclick="openCheckout('yearly')" class="btn btn-primary" style="width: 100%;">Select Yearly</button>
             </div>
@@ -363,11 +363,11 @@
         function openCheckout(plan) {
             document.getElementById('checkoutPlanValue').value = plan;
             if (plan === 'yearly') {
-                document.getElementById('checkoutPlanDisplay').innerText = 'Yearly Plan (৳ 4000)';
-                document.getElementById('checkoutAmountDisplay').innerText = '4000 BDT';
+                document.getElementById('checkoutPlanDisplay').innerText = 'Yearly Plan (৳ 1000)';
+                document.getElementById('checkoutAmountDisplay').innerText = '1000 BDT';
             } else {
-                document.getElementById('checkoutPlanDisplay').innerText = 'Monthly Plan (৳ 500)';
-                document.getElementById('checkoutAmountDisplay').innerText = '500 BDT';
+                document.getElementById('checkoutPlanDisplay').innerText = 'Monthly Plan (৳ 100)';
+                document.getElementById('checkoutAmountDisplay').innerText = '100 BDT';
             }
 
             const authStr = localStorage.getItem('auth');
