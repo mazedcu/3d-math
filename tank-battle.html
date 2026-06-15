@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tank Battle — Shoot the Factors</title>
+    <meta name="description" content="Shoot the enemy tanks that carry the factors of your target number!">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #111;
+            font-family: 'Outfit', sans-serif;
+            touch-action: none;
+            user-select: none;
+        }
+
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, #2a2a35 0%, #111 100%);
+            cursor: crosshair;
+        }
+
+        /* HUD Overlay */
+        #hud {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            z-index: 50;
+            box-sizing: border-box;
+            pointer-events: none;
+        }
+
+        .stat-card {
+            background: rgba(20, 20, 30, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 15px 25px;
+            border-radius: 16px;
+            min-width: 150px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+
+        .stat-lbl {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.6);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .stat-val {
+            font-size: 2.2rem;
+            font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+            color: #fff;
+            text-shadow: 0 2px 10px rgba(255,255,255,0.2);
+        }
+
+        .accent-target { border-color: #3b82f6; box-shadow: 0 0 20px rgba(59,130,246,0.3); }
+        .accent-target .stat-val { color: #60a5fa; text-shadow: 0 0 15px rgba(59,130,246,0.5); }
+
+        .accent-score { border-color: #f59e0b; box-shadow: 0 0 20px rgba(245,158,11,0.3); }
+        .accent-score .stat-val { color: #fbbf24; text-shadow: 0 0 15px rgba(245,158,11,0.5); }
+
+        .back-btn {
+            pointer-events: auto;
+            background: rgba(20,20,30,0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: white;
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            transition: all 0.2s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            margin: 0 15px;
+        }
+        .back-btn:hover {
+            background: rgba(255,255,255,0.1);
+            transform: translateY(-2px);
+        }
+        .back-btn svg { width: 24px; height: 24px; }
+
+        .health-bar-wrapper {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 300px;
+            text-align: center;
+            pointer-events: none;
+        }
+        .health-bar-container {
+            width: 100%;
+            height: 12px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+            margin-top: 8px;
+        }
+        .health-bar {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, #10b981, #34d399);
+            transition: width 0.3s ease-out, background-color 0.3s;
+        }
+
+        /* Overlays */
+        #notify {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            background: rgba(20,20,30,0.95);
+            padding: 40px 60px;
+            border-radius: 24px;
+            text-align: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 1000;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+        }
+        #notify.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+            pointer-events: auto;
+        }
+        #notify-text {
+            font-size: 3rem;
+            font-weight: 800;
+            margin: 0;
+            color: #fff;
+            text-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        #notify-subtext {
+            font-size: 1.2rem;
+            color: rgba(255,255,255,0.7);
+            margin-top: 15px;
+        }
+        
+        .restart-btn {
+            display: inline-block;
+            margin-top: 25px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            border: none;
+            color: white;
+            padding: 14px 36px;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(59,130,246,0.4);
+            transition: transform 0.2s;
+            font-family: inherit;
+        }
+        .restart-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Screen flash */
+        .flash-red-overlay {
+            position: absolute;
+            inset: 0;
+            background: red;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 900;
+            transition: opacity 0.2s;
+        }
+        .flash-red .flash-red-overlay {
+            opacity: 0.3;
+            transition: none;
+        }
+
+        @media (max-width: 600px) {
+            .stat-card { min-width: 100px; padding: 10px; }
+            .stat-val { font-size: 1.8rem; }
+            .health-bar-wrapper { width: 200px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="flash-red-overlay"></div>
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="hud">
+        <div class="stat-card accent-target">
+            <div class="stat-lbl">Your Target Number</div>
+            <div class="stat-val" id="ui-target">12</div>
+        </div>
+
+        <a href="index.html" class="back-btn" aria-label="Back to Hub">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        </a>
+
+        <div class="stat-card accent-score">
+            <div class="stat-lbl">Score</div>
+            <div class="stat-val" id="ui-score">0</div>
+        </div>
+    </div>
+
+    <div class="health-bar-wrapper">
+        <div class="stat-lbl" style="text-shadow: 0 2px 4px rgba(0,0,0,0.8);">Armor Integrity</div>
+        <div class="health-bar-container">
+            <div id="player-health-bar" class="health-bar"></div>
+        </div>
+    </div>
+
+    <div id="notify">
+        <h2 id="notify-text">Game Over</h2>
+        <div id="notify-subtext">You survived for a while.</div>
+        <button class="restart-btn" onclick="location.reload()">Play Again</button>
+    </div>
+
+    <script src="tank-battle.js"></script>
+</body>
+</html>
