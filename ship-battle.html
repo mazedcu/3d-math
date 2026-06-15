@@ -10,52 +10,287 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="shared.css">
     <style>
-        #c {
-            cursor: pointer;
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: linear-gradient(to bottom, #0f172a, #1e3a8a, #0284c7);
+            font-family: 'Outfit', sans-serif;
             touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
         }
-        
+
+        #game-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.02);
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+            overflow: hidden;
+        }
+
+        /* Waves background */
+        .wave {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 200%;
+            height: 150px;
+            background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 1000 150" xmlns="http://www.w3.org/2000/svg"><path d="M0,50 Q250,100 500,50 T1000,50 L1000,150 L0,150 Z" fill="rgba(56, 189, 248, 0.2)"/></svg>') repeat-x;
+            background-size: 50% 100%;
+            animation: moveWave 10s linear infinite;
+        }
+        .wave:nth-child(2) {
+            bottom: -20px;
+            opacity: 0.5;
+            animation: moveWave 15s linear infinite reverse;
+        }
+        @keyframes moveWave {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        /* HUD */
+        #hud {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            z-index: 50;
+            box-sizing: border-box;
+            pointer-events: none;
+        }
+
+        .stat-card {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 15px 20px;
+            border-radius: 16px;
+            min-width: 160px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+
+        .stat-lbl {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.7);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
         .health-bar-container {
             width: 100%;
-            height: 12px;
-            background: rgba(0, 0, 0, 0.5);
-            border-radius: 6px;
+            height: 16px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 8px;
             overflow: hidden;
-            margin-top: 8px;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+            position: relative;
         }
+
         .health-bar {
             height: 100%;
             width: 100%;
-            background: #10b981;
-            transition: width 0.3s ease, background-color 0.3s ease;
-        }
-        
-        #hud .stat {
-            min-width: 120px;
+            transition: width 0.3s ease-out;
+            border-radius: 8px;
         }
 
-        .hud-left, .hud-right {
+        #player-health-bar { background: linear-gradient(90deg, #10b981, #34d399); }
+        #enemy-health-bar { background: linear-gradient(90deg, #ef4444, #f87171); }
+
+        .back-btn {
+            pointer-events: auto;
+            background: rgba(15,23,42,0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: white;
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
             display: flex;
-            gap: 12px;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            transition: all 0.2s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .back-btn:hover {
+            background: rgba(255,255,255,0.1);
+            transform: translateY(-2px);
+        }
+        .back-btn svg { width: 24px; height: 24px; }
+
+        /* Ships */
+        .ship {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
-        /* Notifications */
+        #enemy-ship {
+            top: 10%;
+            width: 250px;
+            height: 100px;
+            background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 100 40" xmlns="http://www.w3.org/2000/svg"><path d="M10,40 L90,40 L100,10 L80,10 L80,0 L20,0 L20,10 L0,10 Z" fill="%235a2b2b"/></svg>') no-repeat center bottom;
+            background-size: contain;
+            filter: drop-shadow(0 15px 20px rgba(0,0,0,0.5));
+            animation: floatEnemy 4s ease-in-out infinite;
+        }
+
+        #player-ship {
+            bottom: 5%;
+            width: 100%;
+            height: 250px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+            padding-bottom: 20px;
+        }
+
+        @keyframes floatEnemy {
+            0%, 100% { transform: translate(-50%, 0) rotate(-1deg); }
+            50% { transform: translate(-50%, -10px) rotate(1deg); }
+        }
+
+        /* Deck and Cannons */
+        .cannons-wrapper {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 40px;
+            background: rgba(139, 90, 43, 0.4);
+            padding: 20px 30px;
+            border-radius: 20px;
+            border-top: 4px solid rgba(139, 90, 43, 0.8);
+            box-shadow: 0 -10px 30px rgba(0,0,0,0.4);
+        }
+
+        .cannon {
+            width: 80px;
+            height: 120px;
+            background: linear-gradient(to bottom, #444, #222);
+            border-radius: 10px 10px 0 0;
+            position: relative;
+            box-shadow: inset -5px 0 15px rgba(0,0,0,0.8), 0 10px 20px rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 10px;
+            border: 2px solid #555;
+            border-bottom: none;
+            transition: transform 0.1s ease-out, filter 0.2s;
+        }
+
+        .cannon.highlight {
+            filter: drop-shadow(0 0 15px #f59e0b) brightness(1.2);
+            border-color: #f59e0b;
+        }
+
+        .cannon.firing {
+            transform: translateY(15px); /* recoil */
+        }
+
+        .cannon-hole {
+            background: radial-gradient(circle, #000 60%, #333 100%);
+            border-radius: 50%;
+            box-shadow: inset 0 5px 10px rgba(0,0,0,1), 0 2px 0 rgba(255,255,255,0.2);
+            border: 2px solid #111;
+        }
+
+        /* Sizes */
+        .size-small { width: 30px; height: 30px; }
+        .size-medium { width: 50px; height: 50px; }
+        .size-large { width: 70px; height: 70px; }
+
+        /* Spawn Area & Cannonball */
+        .spawn-area {
+            width: 100px;
+            height: 100px;
+            border: 2px dashed rgba(255,255,255,0.3);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0,0,0,0.2);
+            position: relative;
+        }
+
+        .cannonball {
+            background: radial-gradient(circle at 30% 30%, #888, #222 60%, #000);
+            border-radius: 50%;
+            box-shadow: 10px 10px 20px rgba(0,0,0,0.5), inset -5px -5px 15px rgba(0,0,0,0.8);
+            position: absolute;
+            cursor: grab;
+            touch-action: none;
+            z-index: 100;
+            transition: transform 0.1s;
+        }
+
+        .cannonball:active {
+            cursor: grabbing;
+            transform: scale(1.05);
+        }
+
+        /* Projectiles & Explosions */
+        .projectile {
+            position: absolute;
+            background: #222;
+            border-radius: 50%;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.8);
+            z-index: 40;
+            pointer-events: none;
+        }
+
+        .explosion {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, #fef08a 10%, #f97316 40%, transparent 70%);
+            border-radius: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            opacity: 1;
+            z-index: 45;
+            pointer-events: none;
+            animation: explode 0.5s ease-out forwards;
+        }
+
+        @keyframes explode {
+            0% { transform: translate(-50%, -50%) scale(0.2); opacity: 1; }
+            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.8; }
+            100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+        }
+
+        /* UI Overlays */
         #notify {
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%) scale(0.9);
-            background: rgba(26,26,46,0.9);
-            padding: 30px 60px;
-            border-radius: 20px;
+            background: rgba(15,23,42,0.95);
+            padding: 40px 60px;
+            border-radius: 24px;
             text-align: center;
             opacity: 0;
             pointer-events: none;
             transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            z-index: 100;
-            backdrop-filter: blur(10px);
-            border: 2px solid rgba(255,255,255,0.1);
+            z-index: 1000;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
         }
         #notify.show {
             opacity: 1;
@@ -63,7 +298,7 @@
             pointer-events: auto;
         }
         #notify-text {
-            font-size: 2.5rem;
+            font-size: 3rem;
             font-weight: 800;
             margin: 0;
             color: #fff;
@@ -72,18 +307,37 @@
         #notify-subtext {
             font-size: 1.2rem;
             color: rgba(255,255,255,0.7);
-            margin-top: 10px;
+            margin-top: 15px;
+        }
+        
+        .restart-btn {
+            display: inline-block;
+            margin-top: 25px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            border: none;
+            color: white;
+            padding: 14px 36px;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(59,130,246,0.4);
+            transition: transform 0.2s;
+            font-family: inherit;
+        }
+        .restart-btn:hover {
+            transform: translateY(-2px);
         }
 
         .hint {
-            position: fixed;
-            bottom: 30px;
+            position: absolute;
+            bottom: 250px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 25;
-            font-size: 1rem;
+            font-size: 1.1rem;
             color: rgba(255,255,255,0.9);
-            background: rgba(26,26,46,0.8);
+            background: rgba(15,23,42,0.8);
             backdrop-filter: blur(10px);
             padding: 12px 24px;
             border-radius: 12px;
@@ -91,81 +345,88 @@
             pointer-events: none;
             border: 1px solid rgba(255,255,255,0.1);
         }
-        
-        .restart-btn {
-            display: none;
-            margin-top: 20px;
-            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-            border: none;
-            color: white;
-            padding: 12px 30px;
-            border-radius: 8px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            cursor: pointer;
-            pointer-events: auto;
+
+        /* Screen flash */
+        .flash-red-overlay {
+            position: absolute;
+            inset: 0;
+            background: red;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 900;
+            transition: opacity 0.2s;
         }
-        #notify.show .restart-btn {
-            display: inline-block;
+        .flash-red .flash-red-overlay {
+            opacity: 0.4;
+            transition: none;
         }
 
+        @media (max-width: 600px) {
+            .cannons-wrapper { gap: 15px; padding: 15px; }
+            .cannon { width: 60px; height: 100px; }
+            .stat-card { min-width: 120px; padding: 10px; }
+            .hint { bottom: 220px; font-size: 0.9rem; }
+        }
     </style>
 </head>
 <body>
-    <canvas id="c"></canvas>
+    <div id="game-container">
+        <!-- Background Waves -->
+        <div class="wave"></div>
+        <div class="wave"></div>
+        <div class="flash-red-overlay"></div>
 
-    <!-- Top HUD -->
-    <div id="hud" class="hud">
-        <div class="hud-left">
-            <div class="stat accent" style="--accent-color: #3b82f6;">
+        <!-- Top HUD -->
+        <div id="hud">
+            <div class="stat-card">
                 <div class="stat-lbl">Player Health</div>
                 <div class="health-bar-container">
                     <div id="player-health-bar" class="health-bar"></div>
                 </div>
             </div>
+
+            <!-- Back Button -->
+            <a href="index.html" class="back-btn" aria-label="Back to Hub">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            </a>
+
+            <div class="stat-card">
+                <div class="stat-lbl" style="text-align:right;">Enemy Health</div>
+                <div class="health-bar-container">
+                    <div id="enemy-health-bar" class="health-bar"></div>
+                </div>
+            </div>
         </div>
 
-        <!-- Back Button -->
-        <a href="index.html" class="back-btn" aria-label="Back to Hub">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-        </a>
+        <div class="hint">
+            Drag the cannonball to the matching hole!
+        </div>
 
-        <div class="hud-right">
-            <div class="stat accent" style="--accent-color: #ef4444;">
-                <div class="stat-lbl">Enemy Health</div>
-                <div class="health-bar-container">
-                    <div id="enemy-health-bar" class="health-bar" style="background: #ef4444;"></div>
-                </div>
+        <!-- Enemy Ship -->
+        <div id="enemy-ship" class="ship"></div>
+
+        <!-- Player Deck -->
+        <div id="player-ship" class="ship">
+            <div class="cannons-wrapper" id="cannons-container">
+                <!-- Cannons inserted by JS -->
+            </div>
+            
+            <div class="spawn-area" id="spawn-area">
+                <div id="cannonball" class="cannonball"></div>
             </div>
         </div>
     </div>
 
-    <!-- Instructions / Status -->
-    <div class="hint">
-        Click the cannon that visually matches the size of the floating cannonball!
-    </div>
-
     <!-- Notification Overlay -->
     <div id="notify">
-        <h2 id="notify-text">Great Match!</h2>
-        <div id="notify-subtext"></div>
+        <h2 id="notify-text">Victory!</h2>
+        <div id="notify-subtext">You sank the enemy ship.</div>
         <button class="restart-btn" onclick="location.reload()">Play Again</button>
     </div>
 
-    <!-- Import maps polyfill -->
-    <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
-    <script type="importmap">
-      {
-        "imports": {
-          "three": "https://unpkg.com/three@0.150.1/build/three.module.js",
-          "three/addons/": "https://unpkg.com/three@0.150.1/examples/jsm/"
-        }
-      }
-    </script>
-
-    <!-- Confetti for win -->
+    <!-- Confetti -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
-    <script type="module" src="ship-battle.js"></script>
+    <script src="ship-battle.js"></script>
 </body>
 </html>
