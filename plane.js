@@ -63,12 +63,35 @@ function init() {
     // Biplane (Player)
     createBiplane();
 
+    // Map a screen Y coordinate to the plane's vertical position
+    function setPointerY(clientY) {
+        const ndcY = -(clientY / window.innerHeight) * 2 + 1;
+        mousePos.y = ndcY * 11.5; // Project roughly to Z=0 plane
+    }
+
     // Events
     window.addEventListener('resize', onWindowResize);
-    window.addEventListener('mousemove', (e) => {
-        const ndcY = -(e.clientY / window.innerHeight) * 2 + 1;
-        mousePos.y = ndcY * 11.5; // Project roughly to Z=0 plane
+
+    // --- Desktop: mouse moves the plane, click fires ---
+    window.addEventListener('mousemove', (e) => setPointerY(e.clientY));
+    canvas.addEventListener('mousedown', () => {
+        if (isPlaying) fireBullet();
     });
+
+    // --- Mobile: touch/drag moves the plane, tap fires ---
+    // preventDefault stops page scroll/zoom AND suppresses the synthetic
+    // mouse events, so a tap won't double-fire.
+    canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        if (e.touches.length) setPointerY(e.touches[0].clientY);
+        if (isPlaying) fireBullet();
+    }, { passive: false });
+    canvas.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        if (e.touches.length) setPointerY(e.touches[0].clientY);
+    }, { passive: false });
+
+    // --- Keyboard: spacebar still fires ---
     window.addEventListener('keydown', (e) => {
         if (e.key === ' ') {
             e.preventDefault(); // Prevent page scroll
