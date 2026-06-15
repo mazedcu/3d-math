@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Angle Cannon — Estimate the Launch Angle</title>
+    <meta name="description" content="Aim the cannon to the requested angle and launch the ball. The closer your estimate, the higher your score!">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <style>
+        #c {
+            cursor: crosshair;
+            touch-action: none;
+        }
+        .aim-panel {
+            position: fixed;
+            bottom: 28px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 30;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            background: rgba(26, 26, 46, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 2px solid #f59e0b;
+            border-radius: 20px;
+            padding: 16px 32px;
+            box-shadow: 0 8px 32px rgba(245, 158, 11, 0.3);
+        }
+        .aim-label {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.7);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        .aim-value {
+            font-size: 2.4rem;
+            font-weight: 800;
+            color: #fbbf24;
+            font-family: 'JetBrains Mono', monospace;
+            line-height: 1;
+        }
+        .btn-launch {
+            background: linear-gradient(135deg, #f59e0b, #ef4444);
+            border: none;
+            color: #fff;
+            font-weight: 800;
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+            padding: 14px 40px;
+            border-radius: 14px;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.35);
+            transition: transform 0.15s, box-shadow 0.15s;
+            font-family: 'Outfit', sans-serif;
+        }
+        .btn-launch:hover { transform: translateY(-2px); box-shadow: 0 10px 26px rgba(239, 68, 68, 0.45); }
+        .btn-launch:active { transform: translateY(0); }
+        .hint {
+            position: fixed;
+            top: 90px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 25;
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.65);
+            background: rgba(26,26,46,0.6);
+            backdrop-filter: blur(10px);
+            padding: 8px 18px;
+            border-radius: 12px;
+            text-align: center;
+            pointer-events: none;
+        }
+        @media (max-width: 640px) {
+            .aim-value { font-size: 2rem; }
+            .btn-launch { padding: 12px 32px; }
+            .hint { top: 76px; font-size: 0.75rem; }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="c"></canvas>
+
+    <!-- Top HUD -->
+    <div id="hud" class="hud">
+        <div class="hud-left">
+            <div class="stat accent" style="--accent-color: #f59e0b;">
+                <div class="stat-val" id="s-score">0</div>
+                <div class="stat-lbl">Score</div>
+            </div>
+            <div class="stat">
+                <div class="stat-val" id="s-round">1/10</div>
+                <div class="stat-lbl">Throw</div>
+            </div>
+            <div class="stat">
+                <div class="stat-val" id="s-best">0</div>
+                <div class="stat-lbl">Best</div>
+            </div>
+        </div>
+        <div class="hud-right" style="display:flex; align-items:center;">
+            <h1 class="title"><span class="t1" style="color: #fbbf24;">ANGLE</span><span class="t2" style="color: #f59e0b;">CANNON</span></h1>
+            <a href="index.html" class="btn" style="text-decoration:none; margin-left: 10px; display:flex; align-items:center;">🏠 Menu</a>
+        </div>
+    </div>
+    <script>
+        if (window.self !== window.top) {
+            const menuBtn = document.querySelector('a[href="index.html"]');
+            if (menuBtn) menuBtn.style.display = 'none';
+        }
+    </script>
+
+    <div class="hint" id="hint">Move / drag to aim &nbsp;•&nbsp; press LAUNCH (or Space) to throw</div>
+
+    <!-- Aim + Launch panel -->
+    <div class="aim-panel">
+        <div class="aim-label">Aim At</div>
+        <div class="aim-value"><span id="target-angle">45</span>&deg;</div>
+        <button class="btn-launch" id="btn-launch">LAUNCH 🚀</button>
+    </div>
+
+    <!-- Notification -->
+    <div class="notify" id="notify">
+        <span id="notify-text">Nice!</span>
+    </div>
+
+    <!-- Start / End Overlay -->
+    <div class="overlay visible" id="start-overlay">
+        <div class="count-box">
+            <div class="count-emoji">🎯</div>
+            <div class="count-title" id="game-end-title">Angle Cannon</div>
+            <div class="count-result" id="game-end-desc" style="margin-bottom: 20px; color: rgba(0,0,0,0.7)">
+                You'll be asked for an angle. <strong>Aim</strong> the cannon to match it as
+                closely as you can, then <strong>LAUNCH</strong>!<br><br>
+                The closer your estimate, the higher your score.
+            </div>
+            <button class="btn primary" id="btn-start" style="width: 100%">START</button>
+        </div>
+    </div>
+
+    <script src="cannon.js"></script>
+</body>
+</html>
