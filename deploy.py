@@ -41,7 +41,7 @@ server {
 
 systemd_service = """
 [Unit]
-Description=Math Hub Gunicorn Daemon
+Description=Numberfield Gunicorn Daemon
 After=network.target
 
 [Service]
@@ -64,7 +64,7 @@ try:
     print("\n--- Installing Dependencies ---")
     run_cmd(ssh, 'apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y nginx python3-pip python3-venv git certbot python3-certbot-nginx')
     
-    print("\n--- Deploying Math Hub ---")
+    print("\n--- Deploying Numberfield ---")
     run_cmd(ssh, 'cp /var/www/html/database.db /tmp/database_backup.db || true')
     run_cmd(ssh, 'rm -rf /var/www/html')
     run_cmd(ssh, 'git clone https://github.com/mazedcu/3d-math.git /var/www/html')
@@ -94,6 +94,6 @@ try:
     run_cmd(ssh, 'ufw allow 8080/tcp')
     
     ssh.close()
-    print("\nDeployment complete! Math Hub backend is now running.")
+    print("\nDeployment complete! Numberfield backend is now running.")
 except Exception as e:
     print(f"Failed to deploy: {e}")
