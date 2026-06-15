@@ -95,10 +95,14 @@ btnSubmit.addEventListener('click', () => {
         score += 10;
         scoreEl.innerText = score;
         ticket.style.background = '#dcfce3';
+        ticket.innerHTML = `<div style="color: #15803d; font-size: 2.5rem; font-weight: bold; padding: 20px 0;">🎉 HURRAY! 🎉<br><span style="font-size:1.5rem">Correct Time!</span></div>`;
+        if (typeof confetti !== 'undefined') {
+            confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+        }
         setTimeout(() => {
             ticket.style.background = '#fff';
             generateRound();
-        }, 1500);
+        }, 2000);
     } else {
         playError();
         score = Math.max(0, score - 5);
