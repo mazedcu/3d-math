@@ -156,8 +156,8 @@ def subscribe():
     return jsonify({"message": "Subscription request submitted successfully! Awaiting admin approval."}), 201
 
 # Admin Authentication
-ADMIN_USER = 'admin'
-ADMIN_PASS = 'admin123'
+ADMIN_USER = 'mazedcu@gmail.com'
+ADMIN_PASS = '114598Tonnihasan'
 ADMIN_TOKEN = 'mathhub_admin_secret_token_999'
 
 def require_admin(f):
