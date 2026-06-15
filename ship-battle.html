@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ship Battle — Match Cannonball Size</title>
+    <meta name="description" content="Match the correct size cannonball to your cannon to fire at the enemy ship before they sink you!">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <style>
+        #c {
+            cursor: pointer;
+            touch-action: none;
+        }
+        
+        .health-bar-container {
+            width: 100%;
+            height: 12px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 6px;
+            overflow: hidden;
+            margin-top: 8px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .health-bar {
+            height: 100%;
+            width: 100%;
+            background: #10b981;
+            transition: width 0.3s ease, background-color 0.3s ease;
+        }
+        
+        #hud .stat {
+            min-width: 120px;
+        }
+
+        .hud-left, .hud-right {
+            display: flex;
+            gap: 12px;
+        }
+
+        /* Notifications */
+        #notify {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            background: rgba(26,26,46,0.9);
+            padding: 30px 60px;
+            border-radius: 20px;
+            text-align: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255,255,255,0.1);
+        }
+        #notify.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+            pointer-events: auto;
+        }
+        #notify-text {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin: 0;
+            color: #fff;
+            text-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        #notify-subtext {
+            font-size: 1.2rem;
+            color: rgba(255,255,255,0.7);
+            margin-top: 10px;
+        }
+
+        .hint {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 25;
+            font-size: 1rem;
+            color: rgba(255,255,255,0.9);
+            background: rgba(26,26,46,0.8);
+            backdrop-filter: blur(10px);
+            padding: 12px 24px;
+            border-radius: 12px;
+            text-align: center;
+            pointer-events: none;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .restart-btn {
+            display: none;
+            margin-top: 20px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            border: none;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            pointer-events: auto;
+        }
+        #notify.show .restart-btn {
+            display: inline-block;
+        }
+
+    </style>
+</head>
+<body>
+    <canvas id="c"></canvas>
+
+    <!-- Top HUD -->
+    <div id="hud" class="hud">
+        <div class="hud-left">
+            <div class="stat accent" style="--accent-color: #3b82f6;">
+                <div class="stat-lbl">Player Health</div>
+                <div class="health-bar-container">
+                    <div id="player-health-bar" class="health-bar"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Back Button -->
+        <a href="index.html" class="back-btn" aria-label="Back to Hub">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        </a>
+
+        <div class="hud-right">
+            <div class="stat accent" style="--accent-color: #ef4444;">
+                <div class="stat-lbl">Enemy Health</div>
+                <div class="health-bar-container">
+                    <div id="enemy-health-bar" class="health-bar" style="background: #ef4444;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Instructions / Status -->
+    <div class="hint">
+        Click the cannon that visually matches the size of the floating cannonball!
+    </div>
+
+    <!-- Notification Overlay -->
+    <div id="notify">
+        <h2 id="notify-text">Great Match!</h2>
+        <div id="notify-subtext"></div>
+        <button class="restart-btn" onclick="location.reload()">Play Again</button>
+    </div>
+
+    <!-- Import maps polyfill -->
+    <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.150.1/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.150.1/examples/jsm/"
+        }
+      }
+    </script>
+
+    <!-- Confetti for win -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script type="module" src="ship-battle.js"></script>
+</body>
+</html>
