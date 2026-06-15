@@ -32,7 +32,10 @@ class Transaction(db.Model):
     user = db.relationship('User', backref=db.backref('transactions', lazy=True))
 
 with app.app_context():
-    db.create_all()
+    try:
+        db.create_all()
+    except Exception as e:
+        pass
 
 # Serve static files (HTML, JS, CSS)
 @app.route('/')
