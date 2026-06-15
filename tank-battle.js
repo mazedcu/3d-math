@@ -121,6 +121,9 @@ function spawnEnemy() {
         y = Math.random() > 0.5 ? -30 : height + 30;
     }
 
+    // Point roughly towards center
+    let initialAngle = Math.atan2((height/2) - y, (width/2) - x) + (Math.random() - 0.5);
+
     // Assign number
     let isFactor = Math.random() > 0.4; // 60% chance to be a factor
     let num;
@@ -140,7 +143,7 @@ function spawnEnemy() {
         number: num,
         isFactor: isFactor,
         speed: 1 + Math.random() * 1.5,
-        angle: 0
+        angle: initialAngle
     });
 }
 
@@ -231,28 +234,47 @@ function update() {
     for (let i = enemies.length - 1; i >= 0; i--) {
         let e = enemies[i];
         
-        // Move towards player
-        const edx = player.x - e.x;
-        const edy = player.y - e.y;
-        e.angle = Math.atan2(edy, edx);
+        if (e.isFactor || e.angry) {
+            // Factor tanks or angry non-factor tanks home in on player
+            const edx = player.x - e.x;
+            const edy = player.y - e.y;
+            e.angle = Math.atan2(edy, edx);
+        } else {
+            // Peaceful non-factor tanks just wander in their initial direction
+            // Keep their angle the same, but maybe bounce off walls
+            if (e.x < 0 || e.x > width || e.y < 0 || e.y > height) {
+                // if they leave screen completely, let them slowly come back or just remove them
+                // Actually they spawn outside, so they are moving in.
+            }
+        }
         
         e.x += Math.cos(e.angle) * e.speed;
         e.y += Math.sin(e.angle) * e.speed;
 
-        // Collision with player
-        if (Math.hypot(edx, edy) < e.radius + player.radius) {
-            // Damage player
-            playerHealth -= 10;
-            uiHealth.style.width = Math.max(0, playerHealth) + '%';
-            document.body.classList.add('flash-red');
-            setTimeout(() => document.body.classList.remove('flash-red'), 200);
-            playExplosion();
-            createExplosion(player.x, player.y, '#f59e0b');
-            
+        // Cleanup if they wander too far off screen (prevent memory leak)
+        if (!e.isFactor && !e.angry && (e.x < -100 || e.x > width + 100 || e.y < -100 || e.y > height + 100)) {
             enemies.splice(i, 1);
+            continue;
+        }
 
-            if (playerHealth <= 0) {
-                endGame();
+        // Collision with player
+        const edx = player.x - e.x;
+        const edy = player.y - e.y;
+        if (Math.hypot(edx, edy) < e.radius + player.radius) {
+            // Only take damage from factors or angry tanks
+            if (e.isFactor || e.angry) {
+                playerHealth -= 10;
+                uiHealth.style.width = Math.max(0, playerHealth) + '%';
+                document.body.classList.add('flash-red');
+                setTimeout(() => document.body.classList.remove('flash-red'), 200);
+                playExplosion();
+                createExplosion(player.x, player.y, '#f59e0b');
+                
+                enemies.splice(i, 1);
+
+                if (playerHealth <= 0) {
+                    endGame();
+                }
             }
         }
     }
