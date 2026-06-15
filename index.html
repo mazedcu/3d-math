@@ -3,7 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Numberfield - Premium Learning</title>
+    <title>Numberfield — Master Math Through Play</title>
+    <meta name="description" content="Numberfield is a library of premium interactive 3D math games. From arithmetic to geometry, learn everything in a fun, hands-on way. Start playing today.">
+    <meta name="theme-color" content="#0b0b10">
+    <meta name="author" content="Numberfield">
+    <link rel="canonical" href="https://numberfield.xyz/">
+
+    <!-- Open Graph / social -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Numberfield">
+    <meta property="og:title" content="Numberfield — Master Math Through Play">
+    <meta property="og:description" content="A library of premium interactive 3D math games. Learn everything from arithmetic to geometry in a fun, hands-on way.">
+    <meta property="og:url" content="https://numberfield.xyz/">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Numberfield — Master Math Through Play">
+    <meta name="twitter:description" content="A library of premium interactive 3D math games for fun, hands-on learning.">
+
+    <!-- Favicon (inline SVG) -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%236366f1'/%3E%3Ctext x='50%25' y='52%25' dominant-baseline='middle' text-anchor='middle' font-family='Outfit,Arial,sans-serif' font-size='38' font-weight='800' fill='white'%3EN%3C/text%3E%3C/svg%3E">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
@@ -12,31 +30,115 @@
 <body>
     <div class="bg-glow"></div>
     <div class="bg-glow-2"></div>
+    <div class="floaties" id="floaties" aria-hidden="true"></div>
 
     <nav class="navbar">
-        <a href="index.html" class="nav-brand">Numberfield</a>
+        <a href="index.html" class="nav-brand"><span class="brand-mark">N</span>Numberfield</a>
         <div class="nav-links">
+            <a href="#features" class="nav-link">Why us</a>
             <a href="#games" class="nav-link">Games</a>
+            <a href="#how" class="nav-link">How it works</a>
             <a href="#pricing" class="nav-link">Pricing</a>
             <a href="#" id="auth-btn" class="btn btn-outline" onclick="handleAuthClick(event)">Login</a>
         </div>
     </nav>
 
     <header class="hero">
+        <span class="eyebrow"><span class="dot"></span> 25+ interactive 3D math games</span>
         <h1>Master Math Through Play</h1>
         <p>Unlock our entire library of premium 3D math games. From basic arithmetic to complex geometry, learn everything in a fun, interactive way.</p>
-        <a href="#pricing" class="btn btn-primary" style="margin-bottom: 40px;">Start Playing Now</a>
-        
-        <div style="width: 100%; max-width: 900px; margin: 0 auto; border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 50px rgba(0,0,0,0.5); background: #0f172a;">
-            <div style="background: rgba(0,0,0,0.6); padding: 10px; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; color: #fbbf24; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: center; align-items: center; gap: 10px;">
-                <span>✈️</span> FREE DEMO: BIPLANE MULTIPLES
+        <div style="display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin-bottom: 56px;">
+            <a href="#pricing" class="btn btn-primary btn-lg">Start Playing Now</a>
+            <a href="#games" class="btn btn-outline btn-lg">Browse Games</a>
+        </div>
+
+        <div class="demo-frame">
+            <div class="demo-bar"><span>✈️</span> FREE DEMO: BIPLANE MULTIPLES</div>
+            <iframe src="plane.html" title="Biplane Multiples free demo game" loading="lazy"></iframe>
+        </div>
+
+        <div class="trust-stats">
+            <div class="trust-stat">
+                <div class="num">25+</div>
+                <div class="label">3D Games</div>
             </div>
-            <iframe src="plane.html" width="100%" height="500px" style="border: none; display: block; background: #000;"></iframe>
+            <div class="trust-stat">
+                <div class="num">4</div>
+                <div class="label">Math Topics</div>
+            </div>
+            <div class="trust-stat">
+                <div class="num">3</div>
+                <div class="label">Difficulty Levels</div>
+            </div>
+            <div class="trust-stat">
+                <div class="num">100%</div>
+                <div class="label">Browser-Based</div>
+            </div>
         </div>
     </header>
 
+    <section id="features" class="container">
+        <h2 class="section-title">Why Numberfield</h2>
+        <p class="section-subtitle">Learning math shouldn't feel like a chore. We turn every concept into a game you actually want to play.</p>
+        <div class="features-grid">
+            <div class="card feature">
+                <div class="feature-icon">🎮</div>
+                <h4>Learn by Playing</h4>
+                <p>Every game is built around a real math concept, so practice feels like play instead of homework.</p>
+            </div>
+            <div class="card feature">
+                <div class="feature-icon">🧊</div>
+                <h4>Immersive 3D</h4>
+                <p>Beautifully rendered 3D worlds that run smoothly right in your browser — no downloads required.</p>
+            </div>
+            <div class="card feature">
+                <div class="feature-icon">📈</div>
+                <h4>Progressive Difficulty</h4>
+                <p>Three difficulty levels span topics from basic arithmetic to algebra, geometry and graphing.</p>
+            </div>
+            <div class="card feature">
+                <div class="feature-icon">🧠</div>
+                <h4>Concept-Focused</h4>
+                <p>PEMDAS, fractions, ratios, probability, coordinates and more — each game targets a key skill.</p>
+            </div>
+            <div class="card feature">
+                <div class="feature-icon">📱</div>
+                <h4>Play Anywhere</h4>
+                <p>Works on laptops, tablets and phones. One subscription unlocks the full library on every device.</p>
+            </div>
+            <div class="card feature">
+                <div class="feature-icon">⚡</div>
+                <h4>Instant Access</h4>
+                <p>Subscribe once and jump straight into any game — new challenges are always a click away.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="how" class="container">
+        <h2 class="section-title">How It Works</h2>
+        <p class="section-subtitle">Get from sign-up to solving in under a minute.</p>
+        <div class="steps-grid">
+            <div class="card step">
+                <div class="step-num">1</div>
+                <h4>Create an account</h4>
+                <p>Sign up in seconds and choose the plan that fits how you learn.</p>
+            </div>
+            <div class="card step">
+                <div class="step-num">2</div>
+                <h4>Unlock the library</h4>
+                <p>Activate your subscription to instantly access all 25+ premium games.</p>
+            </div>
+            <div class="card step">
+                <div class="step-num">3</div>
+                <h4>Play & master math</h4>
+                <p>Pick a topic, jump into a 3D world, and level up your math skills.</p>
+            </div>
+        </div>
+    </section>
+
     <section id="pricing" class="container">
         <h2 class="section-title">Choose Your Subscription</h2>
+        <p class="section-subtitle">One subscription unlocks every game. Cancel anytime.</p>
         <div class="pricing-grid">
             <div class="card pricing-card">
                 <h3>Monthly Plan</h3>
@@ -55,6 +157,7 @@
 
     <section id="games" class="container" style="padding-top: 0;">
         <h2 class="section-title">Our Premium Games</h2>
+        <p class="section-subtitle">25+ hand-crafted 3D games across four core math topics.</p>
         
         <div class="category" style="margin-bottom: 40px;">
             <h3 style="color: var(--accent); margin-bottom: 20px; font-size: 1.5rem;">🔢 Numbers & Logic</h3>
@@ -225,6 +328,33 @@
         </div>
     </section>
 
+    <!-- Footer -->
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <div class="footer-brand">
+                <a href="index.html" class="nav-brand"><span class="brand-mark">N</span>Numberfield</a>
+                <p>Master math through play. A growing library of premium interactive 3D games for learners of every level.</p>
+            </div>
+            <div class="footer-col">
+                <h5>Explore</h5>
+                <a href="#features">Why Numberfield</a>
+                <a href="#games">Games</a>
+                <a href="#how">How it works</a>
+                <a href="#pricing">Pricing</a>
+            </div>
+            <div class="footer-col">
+                <h5>Account</h5>
+                <a href="#" onclick="handleAuthClick(event)">Login</a>
+                <a href="#" onclick="showModal('signupModal'); return false;">Sign up</a>
+                <a href="#pricing">Subscribe</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <span>&copy; <span id="footer-year">2026</span> Numberfield. All rights reserved.</span>
+            <span class="made-with">Made for curious minds.</span>
+        </div>
+    </footer>
+
     <!-- Auth Modals -->
     <!-- Login Modal -->
     <div id="loginModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:1000; align-items:center; justify-content:center;">
@@ -369,8 +499,52 @@
             card.style.display = 'block';
         });
 
+        // Floating decorative shapes
+        (function spawnFloaties() {
+            const wrap = document.getElementById('floaties');
+            if (!wrap) return;
+            const emojis = ['➕','➗','✖️','➖','🔢','π','∑','√','📐','🎯','💡','⭐','🧮','∞'];
+            const count = window.innerWidth < 700 ? 7 : 14;
+            for (let i = 0; i < count; i++) {
+                const el = document.createElement('span');
+                el.className = 'floaty';
+                el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+                el.style.left = Math.random() * 96 + 'vw';
+                el.style.top = Math.random() * 96 + 'vh';
+                el.style.animationDuration = (6 + Math.random() * 8).toFixed(1) + 's';
+                el.style.animationDelay = (-Math.random() * 8).toFixed(1) + 's';
+                el.style.fontSize = (1.4 + Math.random() * 2) + 'rem';
+                el.style.opacity = (0.25 + Math.random() * 0.35).toFixed(2);
+                wrap.appendChild(el);
+            }
+        })();
+
+        // Scroll-reveal animations (progressive enhancement)
+        (function setupReveal() {
+            const targets = document.querySelectorAll(
+                '.section-title, .section-subtitle, .feature, .step, .pricing-card, .game-card, .category h3, .demo-frame, .trust-stats'
+            );
+            if (!('IntersectionObserver' in window)) return; // leave fully visible if unsupported
+            targets.forEach((el, i) => {
+                el.classList.add('reveal');
+                el.style.transitionDelay = ((i % 6) * 60) + 'ms';
+            });
+            const io = new IntersectionObserver((entries) => {
+                entries.forEach(e => {
+                    if (e.isIntersecting) {
+                        e.target.classList.add('in');
+                        io.unobserve(e.target);
+                    }
+                });
+            }, { threshold: 0.12 });
+            targets.forEach(el => io.observe(el));
+        })();
+
         // Check authentication state on load
         window.onload = () => {
+            const yearEl = document.getElementById('footer-year');
+            if (yearEl) yearEl.innerText = new Date().getFullYear();
+
             const authStr = localStorage.getItem('auth');
             if (authStr) {
                 const auth = JSON.parse(authStr);
