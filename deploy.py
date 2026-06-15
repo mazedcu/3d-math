@@ -20,7 +20,7 @@ def run_cmd(ssh, cmd):
 
 nginx_config = """
 server {
-    listen 80;
+    listen 8080;
     server_name _;
 
     root /var/www/html;
@@ -72,7 +72,9 @@ try:
     run_cmd(ssh, 'cd /var/www/html && ./venv/bin/pip install Flask Flask-SQLAlchemy Flask-Cors gunicorn')
     
     print("\n--- Configuring Nginx ---")
-    run_cmd(ssh, f"cat << 'EOF' > /etc/nginx/sites-available/default\n{nginx_config}EOF")
+    run_cmd(ssh, f"cat << 'EOF' > /etc/nginx/sites-available/3d-math\n{nginx_config}EOF")
+    run_cmd(ssh, 'ln -sf /etc/nginx/sites-available/3d-math /etc/nginx/sites-enabled/')
+    run_cmd(ssh, 'rm -f /etc/nginx/sites-enabled/default')
     run_cmd(ssh, 'systemctl restart nginx')
 
     print("\n--- Configuring Systemd Service ---")
@@ -83,6 +85,7 @@ try:
     
     print("\n--- Configuring Firewall ---")
     run_cmd(ssh, 'ufw allow "Nginx Full"')
+    run_cmd(ssh, 'ufw allow 8080/tcp')
     
     ssh.close()
     print("\nDeployment complete! Math Hub backend is now running.")
