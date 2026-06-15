@@ -400,9 +400,9 @@ setInterval(() => {
     if(gameState === 'playing') {
         newRound();
         
-        // Optional: show a mini toast/text on screen "Target changed!"
+        // Optional: show a mini toast/text on screen "New Number!"
         const toast = document.createElement('div');
-        toast.innerText = "Target Changed!";
+        toast.innerText = "New Number!";
         toast.style.position = 'absolute';
         toast.style.top = '100px';
         toast.style.left = '50%';
