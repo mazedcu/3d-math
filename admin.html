@@ -43,17 +43,82 @@
         </div>
     </div>
 
+    <!-- Admin Login Modal -->
+    <div id="adminLoginModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:1000; align-items:center; justify-content:center;">
+        <div class="card" style="width: 100%; max-width: 400px;">
+            <h3 style="margin-bottom: 20px; font-size: 1.5rem;">Admin Login</h3>
+            <div class="form-group">
+                <label class="form-label">Username</label>
+                <input type="text" id="adminUser" class="form-control" placeholder="Admin username">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Password</label>
+                <input type="password" id="adminPass" class="form-control" placeholder="Admin password">
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn btn-primary" style="flex: 1;" onclick="doAdminLogin()">Login</button>
+            </div>
+            <p id="adminLoginError" style="color: var(--danger); margin-top: 10px; font-size: 0.9rem; display: none;"></p>
+        </div>
+    </div>
+
     <script>
-        // In a real application, this page would be protected by an admin login.
-        // For demonstration, we simply fetch all transactions.
-        
-        document.addEventListener('DOMContentLoaded', fetchTransactions);
+        document.addEventListener('DOMContentLoaded', checkAdminAuth);
+
+        function checkAdminAuth() {
+            const token = localStorage.getItem('adminToken');
+            if (!token) {
+                document.getElementById('adminLoginModal').style.display = 'flex';
+            } else {
+                fetchTransactions();
+            }
+        }
+
+        async function doAdminLogin() {
+            const username = document.getElementById('adminUser').value.trim();
+            const password = document.getElementById('adminPass').value.trim();
+            
+            try {
+                const res = await fetch('/api/admin/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await res.json();
+                
+                if (res.ok) {
+                    localStorage.setItem('adminToken', data.token);
+                    document.getElementById('adminLoginModal').style.display = 'none';
+                    fetchTransactions();
+                } else {
+                    document.getElementById('adminLoginError').innerText = data.error || 'Login failed';
+                    document.getElementById('adminLoginError').style.display = 'block';
+                }
+            } catch (err) {
+                document.getElementById('adminLoginError').innerText = 'Server connection error';
+                document.getElementById('adminLoginError').style.display = 'block';
+            }
+        }
+
+        function getAuthHeaders() {
+            const token = localStorage.getItem('adminToken');
+            return {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            };
+        }
 
         async function fetchTransactions() {
             try {
-                const res = await fetch('/api/admin/transactions');
-                const transactions = await res.json();
+                const res = await fetch('/api/admin/transactions', { headers: getAuthHeaders() });
+                if (res.status === 401) {
+                    localStorage.removeItem('adminToken');
+                    document.getElementById('adminLoginModal').style.display = 'flex';
+                    return;
+                }
                 
+                const transactions = await res.json();
                 const tbody = document.getElementById('transactionsTableBody');
                 tbody.innerHTML = '';
                 
@@ -99,8 +164,16 @@
             
             try {
                 const res = await fetch(`/api/admin/transactions/${id}/${action}`, {
-                    method: 'POST'
+                    method: 'POST',
+                    headers: getAuthHeaders()
                 });
+                
+                if (res.status === 401) {
+                    localStorage.removeItem('adminToken');
+                    document.getElementById('adminLoginModal').style.display = 'flex';
+                    return;
+                }
+                
                 if (res.ok) {
                     fetchTransactions(); // Refresh
                 } else {

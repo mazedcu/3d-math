@@ -100,8 +100,32 @@ def login():
         "end_date": user.end_date.isoformat() if user.end_date else None
     }), 200
 
-# Admin Endpoints (Simple auth for demonstration, in production use proper JWT/session)
+# Admin Authentication
+ADMIN_USER = 'admin'
+ADMIN_PASS = 'admin123'
+ADMIN_TOKEN = 'mathhub_admin_secret_token_999'
+
+def require_admin(f):
+    def wrapper(*args, **kwargs):
+        auth = request.headers.get('Authorization')
+        if not auth or auth != f"Bearer {ADMIN_TOKEN}":
+            return jsonify({"error": "Unauthorized"}), 401
+        return f(*args, **kwargs)
+    wrapper.__name__ = f.__name__
+    return wrapper
+
+@app.route('/api/admin/login', methods=['POST'])
+def admin_login():
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
+    
+    if username == ADMIN_USER and password == ADMIN_PASS:
+        return jsonify({"token": ADMIN_TOKEN}), 200
+    return jsonify({"error": "Invalid credentials"}), 401
+
 @app.route('/api/admin/transactions', methods=['GET'])
+@require_admin
 def get_transactions():
     transactions = Transaction.query.order_by(Transaction.created_at.desc()).all()
     res = []
@@ -118,6 +142,7 @@ def get_transactions():
     return jsonify(res), 200
 
 @app.route('/api/admin/transactions/<int:trx_id>/approve', methods=['POST'])
+@require_admin
 def approve_transaction(trx_id):
     trx = Transaction.query.get_or_404(trx_id)
     if trx.status != 'pending':
@@ -142,6 +167,7 @@ def approve_transaction(trx_id):
     return jsonify({"message": "Transaction approved!"}), 200
 
 @app.route('/api/admin/transactions/<int:trx_id>/reject', methods=['POST'])
+@require_admin
 def reject_transaction(trx_id):
     trx = Transaction.query.get_or_404(trx_id)
     if trx.status != 'pending':
