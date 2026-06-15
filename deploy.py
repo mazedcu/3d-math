@@ -81,7 +81,7 @@ try:
     run_cmd(ssh, 'systemctl restart nginx')
     
     print("\n--- Setting up SSL/TLS ---")
-    run_cmd(ssh, 'certbot --nginx -d numberfield.xyz -d www.numberfield.xyz --non-interactive --agree-tos -m mazedcu@gmail.com || true')
+    run_cmd(ssh, 'certbot --nginx -d numberfield.xyz -d www.numberfield.xyz --non-interactive --agree-tos -m mazedcu@gmail.com --redirect || true')
 
     print("\n--- Configuring Systemd Service ---")
     run_cmd(ssh, f"cat << 'EOF' > /etc/systemd/system/mathhub.service\n{systemd_service}EOF")
