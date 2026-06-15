@@ -204,16 +204,24 @@ function generateQuestion() {
     
     let a, b;
     if (type === '+') {
-        a = Math.floor(Math.random() * 50) + 10;
-        b = Math.floor(Math.random() * 50) + 10;
+        // 2-digit + 1-digit
+        a = Math.floor(Math.random() * 40) + 10; // 10 to 49
+        b = Math.floor(Math.random() * 9) + 1;   // 1 to 9
         currentAnswer = a + b;
     } else if (type === '-') {
-        a = Math.floor(Math.random() * 50) + 20;
-        b = Math.floor(Math.random() * 20) + 1;
+        // 2-digit - 1-digit
+        a = Math.floor(Math.random() * 40) + 10; // 10 to 49
+        b = Math.floor(Math.random() * 9) + 1;   // 1 to 9
         currentAnswer = a - b;
     } else if (type === '*') {
-        a = Math.floor(Math.random() * 10) + 2;
-        b = Math.floor(Math.random() * 10) + 2;
+        // Multiplication by 1 or 2
+        a = Math.floor(Math.random() * 9) + 1; // 1 to 9
+        b = Math.floor(Math.random() * 2) + 1; // 1 or 2
+        if (Math.random() > 0.5) {
+            let temp = a;
+            a = b;
+            b = temp;
+        }
         currentAnswer = a * b;
     }
 
