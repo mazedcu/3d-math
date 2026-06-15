@@ -132,10 +132,10 @@ function createJar(xOffset, counts) {
     let totalMarbles = 0;
     Object.values(counts).forEach(c => totalMarbles += c);
     
-    // Simple packing: fill from bottom to top in layers
+    // Ordered packing: fill from bottom to top in layers, max 7 per layer
+    // 1 center, 6 in a hexagon around it.
     let yPos = -2.8 + marbleRadius;
     let placedInLayer = 0;
-    let maxInLayer = 7;
     
     // Flatten counts into an array of colors and shuffle
     let colorArray = [];
@@ -155,22 +155,28 @@ function createJar(xOffset, counts) {
         });
         const marble = new THREE.Mesh(marbleGeo, marbleMat);
         
-        // Find position in current layer
-        let angle = Math.random() * Math.PI * 2;
-        let radius = Math.random() * 1.2; // keep inside jar
+        // Positions for a layer of 7 marbles (touching each other)
+        const d = marbleRadius * 2;
+        const positions = [
+            {x: 0, z: 0},
+            {x: d, z: 0},
+            {x: d * Math.cos(Math.PI/3), z: d * Math.sin(Math.PI/3)},
+            {x: d * Math.cos(2*Math.PI/3), z: d * Math.sin(2*Math.PI/3)},
+            {x: -d, z: 0},
+            {x: d * Math.cos(4*Math.PI/3), z: d * Math.sin(4*Math.PI/3)},
+            {x: d * Math.cos(5*Math.PI/3), z: d * Math.sin(5*Math.PI/3)},
+        ];
         
-        marble.position.set(
-            Math.cos(angle) * radius,
-            yPos + (Math.random()*0.2 - 0.1), // slight jitter
-            Math.sin(angle) * radius
-        );
+        let pos = positions[placedInLayer];
+        
+        marble.position.set(pos.x, yPos, pos.z);
         
         group.add(marble);
         
         placedInLayer++;
-        if (placedInLayer >= maxInLayer) {
+        if (placedInLayer >= 7) {
             placedInLayer = 0;
-            yPos += marbleRadius * 2 * 0.85; // Move up a layer
+            yPos += marbleRadius * 2; // Move up exactly one diameter so they just touch vertically
         }
     });
 
