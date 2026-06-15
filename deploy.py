@@ -48,6 +48,9 @@ After=network.target
 User=root
 Group=www-data
 WorkingDirectory=/var/www/html
+# Secrets (SMTP_USER, SMTP_PASS, etc.) live here, NOT in git. The leading
+# '-' means deploy still works even if the file does not exist yet.
+EnvironmentFile=-/etc/numberfield.env
 ExecStart=/var/www/html/venv/bin/gunicorn --workers 3 --bind 127.0.0.1:5000 app:app
 
 [Install]

@@ -4,10 +4,108 @@ from flask_cors import CORS
 import os
 import datetime
 import uuid
+import ssl
+import smtplib
+import threading
+from email.message import EmailMessage
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__, static_folder='.', static_url_path='')
 CORS(app)
+
+# ------------------------------------------------------------------
+# Email configuration (read from environment variables, never hardcode)
+#   SMTP_HOST   - default smtp.gmail.com
+#   SMTP_PORT   - default 587
+#   SMTP_USER   - the Gmail address that sends the mail
+#   SMTP_PASS   - the Gmail App Password (16 chars, no spaces)
+#   FROM_EMAIL  - optional display "from" address (defaults to SMTP_USER)
+#   FROM_NAME   - optional sender name (defaults to "Numberfield")
+#   SITE_URL    - public site url used in email links
+# ------------------------------------------------------------------
+SMTP_HOST = os.environ.get('SMTP_HOST', 'smtp.gmail.com')
+SMTP_PORT = int(os.environ.get('SMTP_PORT', '587'))
+SMTP_USER = os.environ.get('SMTP_USER', '')
+SMTP_PASS = os.environ.get('SMTP_PASS', '')
+FROM_EMAIL = os.environ.get('FROM_EMAIL', SMTP_USER)
+FROM_NAME = os.environ.get('FROM_NAME', 'Numberfield')
+SITE_URL = os.environ.get('SITE_URL', 'https://numberfield.xyz')
+
+
+def _send_email_sync(to_email, subject, text_body, html_body=None):
+    """Send a single email via SMTP. Logs and swallows errors so the
+    caller (e.g. an admin approval) never fails just because mail did."""
+    if not (SMTP_USER and SMTP_PASS):
+        print('[email] SMTP_USER/SMTP_PASS not configured; skipping email to', to_email)
+        return
+    try:
+        msg = EmailMessage()
+        msg['Subject'] = subject
+        msg['From'] = f'{FROM_NAME} <{FROM_EMAIL}>'
+        msg['To'] = to_email
+        msg.set_content(text_body)
+        if html_body:
+            msg.add_alternative(html_body, subtype='html')
+
+        context = ssl.create_default_context()
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=20) as server:
+            server.ehlo()
+            server.starttls(context=context)
+            server.login(SMTP_USER, SMTP_PASS)
+            server.send_message(msg)
+        print('[email] sent to', to_email, '-', subject)
+    except Exception as e:
+        print('[email] FAILED to send to', to_email, ':', repr(e))
+
+
+def send_email_async(to_email, subject, text_body, html_body=None):
+    """Fire-and-forget email so HTTP requests are not blocked by SMTP latency."""
+    threading.Thread(
+        target=_send_email_sync,
+        args=(to_email, subject, text_body, html_body),
+        daemon=True,
+    ).start()
+
+
+def send_approval_email(user, plan, end_date):
+    plan_label = 'Yearly' if plan == 'yearly' else 'Monthly'
+    end_str = end_date.strftime('%d %b %Y') if end_date else ''
+    subject = 'Your Numberfield subscription is active!'
+    text_body = (
+        f"Hi {user.name},\n\n"
+        f"Great news \u2014 your registration was successful and your {plan_label} "
+        f"subscription has been approved!\n\n"
+        f"You now have full access to all premium games until {end_str}.\n\n"
+        f"Start playing here: {SITE_URL}\n\n"
+        f"Thanks for joining,\n"
+        f"The Numberfield Team"
+    )
+    html_body = f"""\
+<!DOCTYPE html>
+<html>
+  <body style="margin:0;padding:0;background:#0d0524;font-family:Arial,Helvetica,sans-serif;color:#1a1a2e;">
+    <div style="max-width:520px;margin:0 auto;padding:32px 24px;">
+      <div style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,0.25);">
+        <div style="background:linear-gradient(135deg,#ff4ecd,#a855f7,#22d3ee);padding:28px 24px;text-align:center;">
+          <h1 style="margin:0;color:#fff;font-size:24px;">Numberfield</h1>
+        </div>
+        <div style="padding:28px 28px 32px;">
+          <h2 style="margin:0 0 12px;font-size:20px;color:#1a1a2e;">Registration successful! &#127881;</h2>
+          <p style="margin:0 0 14px;color:#444;font-size:15px;line-height:1.6;">Hi {user.name},</p>
+          <p style="margin:0 0 14px;color:#444;font-size:15px;line-height:1.6;">
+            Your <strong>{plan_label} subscription</strong> has been approved and is now active.
+            You have full access to every premium math game{f' until <strong>{end_str}</strong>' if end_str else ''}.
+          </p>
+          <div style="text-align:center;margin:26px 0;">
+            <a href="{SITE_URL}" style="display:inline-block;background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff;text-decoration:none;font-weight:700;padding:14px 32px;border-radius:12px;font-size:15px;">Start Playing</a>
+          </div>
+          <p style="margin:0;color:#888;font-size:13px;line-height:1.6;">Thanks for joining,<br>The Numberfield Team</p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>"""
+    send_email_async(user.email, subject, text_body, html_body)
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'database.db')
@@ -272,7 +370,10 @@ def approve_transaction(trx_id):
         
     user.current_status = 'active'
     db.session.commit()
-    
+
+    # Notify the user that their subscription is now active (non-blocking)
+    send_approval_email(user, trx.plan, user.end_date)
+
     return jsonify({"message": "Transaction approved!"}), 200
 
 @app.route('/api/admin/transactions/<int:trx_id>/reject', methods=['POST'])

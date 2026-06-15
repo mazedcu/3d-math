@@ -59,6 +59,7 @@
         <div class="tabs">
             <button class="tab-btn active" onclick="switchTab('transactions')">Transactions</button>
             <button class="tab-btn" onclick="switchTab('users')">Users</button>
+            <button class="tab-btn" onclick="switchTab('games')">Games</button>
         </div>
 
         <div id="transactions" class="tab-content active">
@@ -100,6 +101,13 @@
                         <!-- Data populated via JS -->
                     </tbody>
                 </table>
+            </div>
+        </div>
+
+        <div id="games" class="tab-content">
+            <p style="color: var(--text-secondary); margin-bottom: 20px;">Admin access &mdash; play any game directly. Links open in a new tab.</p>
+            <div class="games-grid" id="adminGamesGrid">
+                <!-- Game cards populated via JS -->
             </div>
         </div>
     </div>
@@ -189,6 +197,46 @@
             
             if (tabId === 'transactions') fetchTransactions();
             if (tabId === 'users') fetchUsers();
+            if (tabId === 'games') renderAdminGames();
+        }
+
+        const ALL_GAMES = [
+            { f: 'bomb.html', e: '\u{1F4A3}', n: 'BOMB DEFUSAL' },
+            { f: 'train.html', e: '\u{1F682}', n: 'TRAIN CONDUCTOR' },
+            { f: 'submarine.html', e: '\u2693', n: 'SUBMARINE DEPTHS' },
+            { f: 'lcm.html', e: '\u{1F438}', n: 'FROG LCM' },
+            { f: 'blob.html', e: '\u{1F535}', n: 'BLOBMERGE' },
+            { f: 'unitary.html', e: '\u{1F9EA}', n: 'POTION SHOP' },
+            { f: 'snake.html', e: '\u{1F40D}', n: 'MATH SNAKE' },
+            { f: 'wormhole.html', e: '\u{1F300}', n: 'WORMHOLE' },
+            { f: 'race.html', e: '\u{1F3CE}\uFE0F', n: 'MATH RACE' },
+            { f: 'plane.html', e: '\u2708\uFE0F', n: 'BIPLANE MULTIPLES' },
+            { f: 'marbles.html', e: '\u{1F52E}', n: 'MARBLE PROBABILITY' },
+            { f: 'cylinder.html', e: '\u{1F9EA}', n: 'CYLINDER MIXER' },
+            { f: 'ratio-ninja.html', e: '\u2694\uFE0F', n: 'RATIO NINJA' },
+            { f: 'aliens.html', e: '\u{1F47E}', n: 'MATH ALIEN' },
+            { f: 'bridge.html', e: '\u{1F309}', n: 'FRACTION BRIDGE' },
+            { f: 'ratio.html', e: '\u{1F34E}', n: 'RATIO APPLES' },
+            { f: 'space.html', e: '\u{1F680}', n: 'PERCENT SPACE LAUNCH' },
+            { f: 'balance.html', e: '\u2696\uFE0F', n: 'BALANCE SCALE' },
+            { f: 'slime.html', e: '\u{1F9A0}', n: 'SLIME SPLITTER' },
+            { f: 'asteroid.html', e: '\u2604\uFE0F', n: 'ASTEROID TRAJECTORY' },
+            { f: 'crystal.html', e: '\u{1F48E}', n: 'CRYSTAL CARVER' },
+            { f: 'laser.html', e: '\u{1FA9E}', n: 'LASER MIRRORS' },
+            { f: 'tiles.html', e: '\u{1F9F1}', n: 'TILE MATH' },
+            { f: 'missile.html', e: '\u{1F680}', n: 'DESTROY THE SHIP' },
+        ];
+
+        function renderAdminGames() {
+            const grid = document.getElementById('adminGamesGrid');
+            if (grid.dataset.rendered) return;
+            grid.innerHTML = ALL_GAMES.map(g => `
+                <a href="${g.f}" target="_blank" rel="noopener" class="card game-card" style="text-decoration:none; color:var(--text-primary); display:block; text-align:center;">
+                    <div style="font-size: 3rem; margin-bottom: 10px;">${g.e}</div>
+                    <h4 style="font-size: 1.1rem;">${g.n}</h4>
+                </a>
+            `).join('');
+            grid.dataset.rendered = '1';
         }
 
         async function fetchTransactions() {
