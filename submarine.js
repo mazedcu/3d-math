@@ -43,9 +43,9 @@ function generateRound() {
     let change = Math.floor(Math.random() * 8 + 2) * 10; // 20 to 100
     let isDrop = Math.random() > 0.5;
     
-    // Prevent going above water (positive) or too deep (< -800)
+    // Prevent going above water (positive) or too deep (< -300)
     if (currentDepth + change > 0) isDrop = true;
-    if (currentDepth - change < -800) isDrop = false;
+    if (currentDepth - change < -300) isDrop = false;
     
     if (isDrop) {
         qText.innerText = `Currently at ${currentDepth}m. Drop ${change}m.`;
@@ -115,10 +115,10 @@ function checkAnswer(val) {
 }
 
 function updateSubmarinePosition() {
-    // Map 0 to -1000 to percentages 10% to 100%
+    // Map 0 to -300 to percentages 10% to 85%
     // 0m = 10%
-    // -1000m = 100%
-    let percentage = 10 + (Math.abs(currentDepth) / 1000) * 90;
+    // -300m = 85%
+    let percentage = 10 + (Math.abs(currentDepth) / 300) * 75;
     sub.style.top = `${percentage}%`;
 }
 
