@@ -5,12 +5,17 @@ def run_cmd(ssh, cmd):
     print(f"Executing: {cmd}")
     stdin, stdout, stderr = ssh.exec_command(cmd)
     
-    out = stdout.read().decode('utf-8')
-    err = stderr.read().decode('utf-8')
+    out = stdout.read().decode('utf-8', errors='replace')
+    err = stderr.read().decode('utf-8', errors='replace')
     status = stdout.channel.recv_exit_status()
     
-    if out: print(out.strip())
-    if err: print(f"ERROR: {err.strip()}")
+    # Safe print for Windows console
+    if out: 
+        safe_out = out.encode('ascii', errors='replace').decode('ascii')
+        print(safe_out.strip())
+    if err: 
+        safe_err = err.encode('ascii', errors='replace').decode('ascii')
+        print(f"ERROR: {safe_err.strip()}")
     return status
 
 nginx_config = """
@@ -59,8 +64,8 @@ try:
     run_cmd(ssh, 'apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y nginx python3-pip python3-venv git')
     
     print("\n--- Deploying Math Hub ---")
-    run_cmd(ssh, 'rm -rf /var/www/html/*')
-    run_cmd(ssh, 'git clone https://github.com/mazedcu/3d-math.git /var/www/html/')
+    run_cmd(ssh, 'rm -rf /var/www/html')
+    run_cmd(ssh, 'git clone https://github.com/mazedcu/3d-math.git /var/www/html')
     
     print("\n--- Setting up Python Virtual Environment ---")
     run_cmd(ssh, 'cd /var/www/html && python3 -m venv venv')
