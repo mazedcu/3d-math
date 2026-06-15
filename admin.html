@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Hub - Admin Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div class="bg-glow"></div>
+    
+    <nav class="navbar">
+        <div class="nav-brand">Admin Dashboard</div>
+        <div class="nav-links">
+            <a href="index.html" class="nav-link">View Site</a>
+        </div>
+    </nav>
+
+    <div class="container" style="max-width: 1400px;">
+        <h2 class="section-title" style="text-align: left; margin-bottom: 20px;">Subscription Management</h2>
+        
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>User Name</th>
+                        <th>Phone</th>
+                        <th>Plan</th>
+                        <th>Transaction ID</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="transactionsTableBody">
+                    <!-- Data populated via JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // In a real application, this page would be protected by an admin login.
+        // For demonstration, we simply fetch all transactions.
+        
+        document.addEventListener('DOMContentLoaded', fetchTransactions);
+
+        async function fetchTransactions() {
+            try {
+                const res = await fetch('/api/admin/transactions');
+                const transactions = await res.json();
+                
+                const tbody = document.getElementById('transactionsTableBody');
+                tbody.innerHTML = '';
+                
+                transactions.forEach(t => {
+                    const row = document.createElement('tr');
+                    
+                    const d = new Date(t.created_at);
+                    const dateStr = d.toLocaleDateString() + ' ' + d.toLocaleTimeString();
+                    
+                    let statusClass = 'status-pending';
+                    if (t.status === 'approved') statusClass = 'status-approved';
+                    if (t.status === 'rejected') statusClass = 'status-rejected';
+
+                    let actionsHtml = '';
+                    if (t.status === 'pending') {
+                        actionsHtml = `
+                            <button class="btn btn-outline btn-small" style="color: var(--success); border-color: var(--success);" onclick="processTransaction(${t.id}, 'approve')">Approve</button>
+                            <button class="btn btn-outline btn-small" style="color: var(--danger); border-color: var(--danger);" onclick="processTransaction(${t.id}, 'reject')">Reject</button>
+                        `;
+                    } else {
+                        actionsHtml = '<span style="color: var(--text-secondary); font-size: 0.8rem;">Processed</span>';
+                    }
+
+                    row.innerHTML = `
+                        <td>#${t.id}</td>
+                        <td>${t.name}</td>
+                        <td>${t.phone}</td>
+                        <td style="text-transform: capitalize;">${t.plan}</td>
+                        <td style="font-family: var(--font-mono);">${t.trx_id}</td>
+                        <td><span class="status-badge ${statusClass}">${t.status}</span></td>
+                        <td style="color: var(--text-secondary); font-size: 0.9rem;">${dateStr}</td>
+                        <td class="action-btns">${actionsHtml}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (err) {
+                console.error("Failed to load transactions", err);
+            }
+        }
+
+        async function processTransaction(id, action) {
+            if (!confirm(`Are you sure you want to ${action} transaction #${id}?`)) return;
+            
+            try {
+                const res = await fetch(`/api/admin/transactions/${id}/${action}`, {
+                    method: 'POST'
+                });
+                if (res.ok) {
+                    fetchTransactions(); // Refresh
+                } else {
+                    const data = await res.json();
+                    alert("Error: " + data.error);
+                }
+            } catch (err) {
+                alert("Server connection error.");
+            }
+        }
+    </script>
+</body>
+</html>

@@ -3,306 +3,297 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Math Hub</title>
+    <title>Math Hub - Premium Learning</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="shared.css">
-    <style>
-        html, body {
-            height: auto !important;
-            overflow: auto !important;
-            overflow-x: hidden !important;
-        }
-        body {
-            display: flex;
-            align-items: center;
-            flex-direction: column;
-            background: #1a1a2e;
-            color: white;
-            padding: 60px 20px;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-        .hub-title {
-            font-size: 3.5rem;
-            margin-bottom: 50px;
-            text-align: center;
-            letter-spacing: 2px;
-        }
-        .category {
-            width: 100%;
-            max-width: 1200px;
-            margin-bottom: 50px;
-        }
-        .category-title {
-            font-size: 2rem;
-            color: rgba(255,255,255,0.8);
-            margin-bottom: 24px;
-            padding-bottom: 12px;
-            border-bottom: 2px solid rgba(255,255,255,0.1);
-            letter-spacing: 1px;
-        }
-        .cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 30px;
-        }
-        .card {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 24px;
-            padding: 40px 30px;
-            text-align: center;
-            text-decoration: none;
-            color: white;
-            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .card:hover {
-            transform: translateY(-8px);
-            background: rgba(255,255,255,0.1);
-            border-color: rgba(255,255,255,0.3);
-            box-shadow: 0 16px 40px rgba(0,0,0,0.4);
-        }
-        .card-icon {
-            font-size: 4rem;
-            margin-bottom: 20px;
-            display: inline-block;
-        }
-        .card-title {
-            font-size: 1.8rem;
-            font-weight: 700;
-            margin-bottom: 12px;
-            letter-spacing: 1px;
-        }
-        .card-desc {
-            font-size: 0.95rem;
-            color: rgba(255,255,255,0.6);
-            line-height: 1.5;
-        }
-        
-        .card.blob .card-title { color: #06b6d4; }
-        .card.blob:hover { box-shadow: 0 16px 40px rgba(6, 182, 212, 0.2); }
-        
-        .card.snake .card-title { color: #10b981; }
-        .card.snake:hover { box-shadow: 0 16px 40px rgba(16, 185, 129, 0.2); }
-
-        .card.tiles .card-title { color: #7c3aed; }
-        .card.tiles:hover { box-shadow: 0 16px 40px rgba(124, 58, 237, 0.25); }
-
-        .card.wormhole .card-title { color: #00ff66; }
-        .card.wormhole:hover { box-shadow: 0 16px 40px rgba(0, 255, 102, 0.25); }
-
-        .card.aliens .card-title { color: #f43f5e; }
-        .card.aliens:hover { box-shadow: 0 16px 40px rgba(244, 63, 94, 0.25); }
-
-        .card.bridge .card-title { color: #f59e0b; }
-        .card.bridge:hover { box-shadow: 0 16px 40px rgba(245, 158, 11, 0.25); }
-
-        .card.missile .card-title { color: #3b82f6; }
-        .card.missile:hover { box-shadow: 0 16px 40px rgba(59, 130, 246, 0.25); }
-
-        .card.lcm .card-title { color: #a78bfa; }
-        .card.lcm:hover { box-shadow: 0 16px 40px rgba(167, 139, 250, 0.25); }
-
-        .card.race .card-title { color: #f59e0b; }
-        .card.race:hover { box-shadow: 0 16px 40px rgba(245, 158, 11, 0.25); }
-
-        .card.plane .card-title { color: #3b82f6; }
-        .card.plane:hover { box-shadow: 0 16px 40px rgba(59, 130, 246, 0.25); }
-
-        .card.ratio .card-title { color: #ef4444; }
-        .card.ratio:hover { box-shadow: 0 16px 40px rgba(239, 68, 68, 0.25); }
-
-        .card.space .card-title { color: #38bdf8; }
-        .card.space:hover { box-shadow: 0 16px 40px rgba(56, 189, 248, 0.25); }
-
-        .card.unitary .card-title { color: #c084fc; }
-        .card.unitary:hover { box-shadow: 0 16px 40px rgba(192, 132, 252, 0.25); }
-
-        .card.rationinja .card-title { color: #fde047; }
-        .card.rationinja:hover { box-shadow: 0 16px 40px rgba(253, 224, 71, 0.25); }
-
-        .card.submarine .card-title { color: #0ea5e9; }
-        .card.submarine:hover { box-shadow: 0 16px 40px rgba(14, 165, 233, 0.25); }
-
-        .card.laser .card-title { color: #ef4444; }
-        .card.laser:hover { box-shadow: 0 16px 40px rgba(239, 68, 68, 0.25); }
-
-        .card.slime .card-title { color: #34d399; }
-        .card.slime:hover { box-shadow: 0 16px 40px rgba(52, 211, 153, 0.25); }
-
-        .card.bomb .card-title { color: #ef4444; }
-        .card.bomb:hover { box-shadow: 0 16px 40px rgba(239, 68, 68, 0.25); }
-
-        .card.gacha .card-title { color: #fbbf24; }
-        .card.gacha:hover { box-shadow: 0 16px 40px rgba(251, 191, 36, 0.25); }
-
-        .card.balance .card-title { color: #f59e0b; }
-        .card.balance:hover { box-shadow: 0 16px 40px rgba(245, 158, 11, 0.25); }
-
-        .card.cylinder .card-title { color: #06b6d4; }
-        .card.cylinder:hover { box-shadow: 0 16px 40px rgba(6, 182, 212, 0.25); }
-
-        .card.asteroid .card-title { color: #22c55e; }
-        .card.asteroid:hover { box-shadow: 0 16px 40px rgba(34, 197, 94, 0.25); }
-
-        .card.train .card-title { color: #0284c7; }
-        .card.train:hover { box-shadow: 0 16px 40px rgba(2, 132, 199, 0.25); }
-
-        .card.crystal .card-title { color: #c084fc; }
-        .card.crystal:hover { box-shadow: 0 16px 40px rgba(192, 132, 252, 0.25); }
-    </style>
+    <link rel="stylesheet" href="main.css">
 </head>
 <body>
-    <h1 class="hub-title">3D MATH GAMES</h1>
-    <div class="category">
-        <h2 class="category-title">🔢 Numbers & Logic</h2>
-        <div class="cards">
-            <a href="bomb.html" class="card bomb">
-                <div class="card-icon">💣</div>
-                <div class="card-title">BOMB DEFUSAL</div>
-                <div class="card-desc">Cut the correct wire by following the Order of Operations (PEMDAS)!</div>
-            </a>
-            <a href="train.html" class="card train">
-                <div class="card-icon">🚂</div>
-                <div class="card-title">TRAIN CONDUCTOR</div>
-                <div class="card-desc">Calculate the exact arrival time of the train based on its schedule!</div>
-            </a>
-            <a href="submarine.html" class="card submarine">
-                <div class="card-icon">⚓</div>
-                <div class="card-title">SUBMARINE DEPTHS</div>
-                <div class="card-desc">Calculate negative numbers to safely navigate the submarine's depth!</div>
-            </a>
-            <a href="lcm.html" class="card lcm">
-                <div class="card-icon">🐸</div>
-                <div class="card-title">FROG LCM</div>
-                <div class="card-desc">Two frogs jump by different lengths — guess where they first land together!</div>
-            </a>
-            <a href="blob.html" class="card blob">
-                <div class="card-icon">🔵</div>
-                <div class="card-title">BLOBMERGE</div>
-                <div class="card-desc">Group identical balls into 10s and solve the total count challenge!</div>
-            </a>
-            <a href="unitary.html" class="card unitary">
-                <div class="card-icon">🧪</div>
-                <div class="card-title">POTION SHOP</div>
-                <div class="card-desc">Sell potions to the wizard! Calculate the unit price before finding the total.</div>
-            </a>
-            <a href="snake.html" class="card snake">
-                <div class="card-icon">🐍</div>
-                <div class="card-title">MATH SNAKE</div>
-                <div class="card-desc">Grow by eating even numbers, shrink on odds! Face the boss at 60s!</div>
-            </a>
-            <a href="wormhole.html" class="card wormhole">
-                <div class="card-icon">🌀</div>
-                <div class="card-title">WORMHOLE</div>
-                <div class="card-desc">Fly through a Matrix-style wormhole — dodge the deadly prime numbers!</div>
-            </a>
-            <a href="race.html" class="card race">
-                <div class="card-icon">🏎️</div>
-                <div class="card-title">MATH RACE</div>
-                <div class="card-desc">Race a PC car to the finish line by solving 10 math problems quickly!</div>
-            </a>
-            <a href="plane.html" class="card plane">
-                <div class="card-icon">✈️</div>
-                <div class="card-title">BIPLANE MULTIPLES</div>
-                <div class="card-desc">Fly a WWI biplane! Shoot the non-multiples and fly safely through the correct ones!</div>
-            </a>
+    <div class="bg-glow"></div>
+    <div class="bg-glow-2"></div>
+
+    <nav class="navbar">
+        <a href="index.html" class="nav-brand">Math Hub</a>
+        <div class="nav-links">
+            <a href="#games" class="nav-link">Games</a>
+            <a href="#pricing" class="nav-link">Pricing</a>
+            <a href="#" id="auth-btn" class="btn btn-outline" onclick="handleAuthClick(event)">Login</a>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <h1>Master Math Through Play</h1>
+        <p>Unlock our entire library of premium 3D math games. From basic arithmetic to complex geometry, learn everything in a fun, interactive way.</p>
+        <a href="#pricing" class="btn btn-primary">Start Playing Now</a>
+    </header>
+
+    <section id="pricing" class="container">
+        <h2 class="section-title">Choose Your Subscription</h2>
+        <div class="pricing-grid">
+            <div class="card pricing-card">
+                <h3>Monthly Plan</h3>
+                <div class="price">৳ 500<span>/month</span></div>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">Perfect for short-term learning and practice.</p>
+                <a href="checkout.html?plan=monthly" class="btn btn-outline" style="width: 100%;">Select Monthly</a>
+            </div>
+            <div class="card pricing-card popular">
+                <h3>Yearly Plan</h3>
+                <div class="price">৳ 4000<span>/year</span></div>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">Save over 30% with our annual subscription.</p>
+                <a href="checkout.html?plan=yearly" class="btn btn-primary" style="width: 100%;">Select Yearly</a>
+            </div>
+        </div>
+    </section>
+
+    <section id="games" class="container" style="padding-top: 0;">
+        <h2 class="section-title">Our Premium Games</h2>
+        
+        <div class="category" style="margin-bottom: 40px;">
+            <h3 style="color: var(--accent); margin-bottom: 20px; font-size: 1.5rem;">🔢 Numbers & Logic</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
+                <a href="bomb.html" class="card game-card" onclick="checkAccess(event)">
+                    <div style="font-size: 3rem; margin-bottom: 10px;">💣</div>
+                    <h4 style="font-size: 1.2rem; margin-bottom: 5px;">BOMB DEFUSAL</h4>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary);">Cut the correct wire by following PEMDAS!</p>
+                </a>
+                <a href="train.html" class="card game-card" onclick="checkAccess(event)">
+                    <div style="font-size: 3rem; margin-bottom: 10px;">🚂</div>
+                    <h4 style="font-size: 1.2rem; margin-bottom: 5px;">TRAIN CONDUCTOR</h4>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary);">Calculate exact arrival times!</p>
+                </a>
+                <a href="submarine.html" class="card game-card" onclick="checkAccess(event)">
+                    <div style="font-size: 3rem; margin-bottom: 10px;">⚓</div>
+                    <h4 style="font-size: 1.2rem; margin-bottom: 5px;">SUBMARINE DEPTHS</h4>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary);">Calculate negative numbers to navigate safely!</p>
+                </a>
+                <a href="lcm.html" class="card game-card" onclick="checkAccess(event)">
+                    <div style="font-size: 3rem; margin-bottom: 10px;">🐸</div>
+                    <h4 style="font-size: 1.2rem; margin-bottom: 5px;">FROG LCM</h4>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary);">Guess where frogs first land together!</p>
+                </a>
+                <a href="blob.html" class="card game-card" onclick="checkAccess(event)">
+                    <div style="font-size: 3rem; margin-bottom: 10px;">🔵</div>
+                    <h4 style="font-size: 1.2rem; margin-bottom: 5px;">BLOBMERGE</h4>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary);">Group identical balls into 10s.</p>
+                </a>
+                <a href="unitary.html" class="card game-card" onclick="checkAccess(event)">
+                    <div style="font-size: 3rem; margin-bottom: 10px;">🧪</div>
+                    <h4 style="font-size: 1.2rem; margin-bottom: 5px;">POTION SHOP</h4>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary);">Calculate unit prices before finding total.</p>
+                </a>
+                <a href="snake.html" class="card game-card" onclick="checkAccess(event)">
+                    <div style="font-size: 3rem; margin-bottom: 10px;">🐍</div>
+                    <h4 style="font-size: 1.2rem; margin-bottom: 5px;">MATH SNAKE</h4>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary);">Grow by eating even numbers!</p>
+                </a>
+                <a href="wormhole.html" class="card game-card" onclick="checkAccess(event)">
+                    <div style="font-size: 3rem; margin-bottom: 10px;">🌀</div>
+                    <h4 style="font-size: 1.2rem; margin-bottom: 5px;">WORMHOLE</h4>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary);">Dodge the deadly prime numbers!</p>
+                </a>
+                <a href="race.html" class="card game-card" onclick="checkAccess(event)">
+                    <div style="font-size: 3rem; margin-bottom: 10px;">🏎️</div>
+                    <h4 style="font-size: 1.2rem; margin-bottom: 5px;">MATH RACE</h4>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary);">Solve 10 math problems quickly!</p>
+                </a>
+                <a href="plane.html" class="card game-card" onclick="checkAccess(event)">
+                    <div style="font-size: 3rem; margin-bottom: 10px;">✈️</div>
+                    <h4 style="font-size: 1.2rem; margin-bottom: 5px;">BIPLANE MULTIPLES</h4>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary);">Shoot the non-multiples!</p>
+                </a>
+            </div>
+        </div>
+
+        <div class="category" style="margin-bottom: 40px;">
+            <h3 style="color: var(--success); margin-bottom: 20px; font-size: 1.5rem;">🍕 Fractions & Proportions</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
+                <a href="gacha.html" class="card game-card" onclick="checkAccess(event)">
+                    <div style="font-size: 3rem; margin-bottom: 10px;">🎰</div>
+                    <h4 style="font-size: 1.2rem; margin-bottom: 5px;">MONSTER GACHA</h4>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary);">Calculate probability fractions.</p>
+                </a>
+                <a href="cylinder.html" class="card game-card" onclick="checkAccess(event)">
+                    <div style="font-size: 3rem; margin-bottom: 10px;">🧪</div>
+                    <h4 style="font-size: 1.2rem; margin-bottom: 5px;">CYLINDER MIXER</h4>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary);">Add exact decimal measurements.</p>
+                </a>
+                <a href="ratio-ninja.html" class="card game-card" onclick="checkAccess(event)">
+                    <div style="font-size: 3rem; margin-bottom: 10px;">⚔️</div>
+                    <h4 style="font-size: 1.2rem; margin-bottom: 5px;">RATIO NINJA</h4>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary);">Slice numbers to find the simplest ratio form.</p>
+                </a>
+                <a href="aliens.html" class="card game-card" onclick="checkAccess(event)">
+                    <div style="font-size: 3rem; margin-bottom: 10px;">👾</div>
+                    <h4 style="font-size: 1.2rem; margin-bottom: 5px;">MATH ALIEN</h4>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary);">Solve fractions to blast the invasion!</p>
+                </a>
+                <a href="bridge.html" class="card game-card" onclick="checkAccess(event)">
+                    <div style="font-size: 3rem; margin-bottom: 10px;">🌉</div>
+                    <h4 style="font-size: 1.2rem; margin-bottom: 5px;">FRACTION BRIDGE</h4>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary);">Drag planks to build a bridge.</p>
+                </a>
+                <a href="ratio.html" class="card game-card" onclick="checkAccess(event)">
+                    <div style="font-size: 3rem; margin-bottom: 10px;">🍎</div>
+                    <h4 style="font-size: 1.2rem; margin-bottom: 5px;">RATIO APPLES</h4>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary);">Divide apples by ratio.</p>
+                </a>
+                <a href="space.html" class="card game-card" onclick="checkAccess(event)">
+                    <div style="font-size: 3rem; margin-bottom: 10px;">🚀</div>
+                    <h4 style="font-size: 1.2rem; margin-bottom: 5px;">PERCENT SPACE LAUNCH</h4>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary);">Calculate correct fuel percentage!</p>
+                </a>
+            </div>
+        </div>
+
+        <div class="category" style="margin-bottom: 40px;">
+            <h3 style="color: var(--danger); margin-bottom: 20px; font-size: 1.5rem;">🧮 Algebra & Pre-Algebra</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
+                <a href="balance.html" class="card game-card" onclick="checkAccess(event)">
+                    <div style="font-size: 3rem; margin-bottom: 10px;">⚖️</div>
+                    <h4 style="font-size: 1.2rem; margin-bottom: 5px;">BALANCE SCALE</h4>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary);">Solve for X by balancing equations!</p>
+                </a>
+                <a href="slime.html" class="card game-card" onclick="checkAccess(event)">
+                    <div style="font-size: 3rem; margin-bottom: 10px;">🦠</div>
+                    <h4 style="font-size: 1.2rem; margin-bottom: 5px;">SLIME SPLITTER</h4>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary);">Calculate Base and Exponents.</p>
+                </a>
+            </div>
+        </div>
+
+        <div class="category">
+            <h3 style="color: #c084fc; margin-bottom: 20px; font-size: 1.5rem;">📐 Geometry & Graphing</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
+                <a href="asteroid.html" class="card game-card" onclick="checkAccess(event)">
+                    <div style="font-size: 3rem; margin-bottom: 10px;">☄️</div>
+                    <h4 style="font-size: 1.2rem; margin-bottom: 5px;">ASTEROID TRAJECTORY</h4>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary);">Graph the line to fire the laser!</p>
+                </a>
+                <a href="crystal.html" class="card game-card" onclick="checkAccess(event)">
+                    <div style="font-size: 3rem; margin-bottom: 10px;">💎</div>
+                    <h4 style="font-size: 1.2rem; margin-bottom: 5px;">CRYSTAL CARVER</h4>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary);">Plot mirrored coordinates.</p>
+                </a>
+                <a href="laser.html" class="card game-card" onclick="checkAccess(event)">
+                    <div style="font-size: 3rem; margin-bottom: 10px;">🪞</div>
+                    <h4 style="font-size: 1.2rem; margin-bottom: 5px;">LASER MIRRORS</h4>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary);">Adjust mirror angles.</p>
+                </a>
+                <a href="tiles.html" class="card game-card" onclick="checkAccess(event)">
+                    <div style="font-size: 3rem; margin-bottom: 10px;">🧱</div>
+                    <h4 style="font-size: 1.2rem; margin-bottom: 5px;">TILE MATH</h4>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary);">Learn area, volume, and multiplication!</p>
+                </a>
+                <a href="missile.html" class="card game-card" onclick="checkAccess(event)">
+                    <div style="font-size: 3rem; margin-bottom: 10px;">🚀</div>
+                    <h4 style="font-size: 1.2rem; margin-bottom: 5px;">DESTROY THE SHIP</h4>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary);">Type exact coordinates.</p>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Login Modal -->
+    <div id="loginModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:1000; align-items:center; justify-content:center;">
+        <div class="card" style="width: 100%; max-width: 400px;">
+            <h3 style="margin-bottom: 20px; font-size: 1.5rem;">Login</h3>
+            <p style="color: var(--text-secondary); margin-bottom: 20px;">Enter your registered phone number to access games.</p>
+            <div class="form-group">
+                <label class="form-label">Phone Number</label>
+                <input type="text" id="loginPhone" class="form-control" placeholder="e.g. 01712345678">
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn btn-outline" style="flex: 1;" onclick="document.getElementById('loginModal').style.display='none'">Cancel</button>
+                <button class="btn btn-primary" style="flex: 1;" onclick="doLogin()">Login</button>
+            </div>
+            <p id="loginError" style="color: var(--danger); margin-top: 10px; font-size: 0.9rem; display: none;"></p>
         </div>
     </div>
 
-    <div class="category">
-        <h2 class="category-title">🍕 Fractions & Proportions</h2>
-        <div class="cards">
-            <a href="gacha.html" class="card gacha">
-                <div class="card-icon">🎰</div>
-                <div class="card-title">MONSTER GACHA</div>
-                <div class="card-desc">Calculate the correct probability fraction of winning the colored monster!</div>
-            </a>
-            <a href="cylinder.html" class="card cylinder">
-                <div class="card-icon">🧪</div>
-                <div class="card-title">CYLINDER MIXER</div>
-                <div class="card-desc">Add exact decimal measurements of liquid to reach the target line!</div>
-            </a>
-            <a href="ratio-ninja.html" class="card rationinja">
-                <div class="card-icon">⚔️</div>
-                <div class="card-title">RATIO NINJA</div>
-                <div class="card-desc">Slice numbers with your sword to find the simplest form of the ratio!</div>
-            </a>
-            <a href="aliens.html" class="card aliens">
-                <div class="card-icon">👾</div>
-                <div class="card-title">MATH ALIEN</div>
-                <div class="card-desc">Solve fractions & percentages to power up your gun and blast the invasion!</div>
-            </a>
-            <a href="bridge.html" class="card bridge">
-                <div class="card-icon">🌉</div>
-                <div class="card-title">FRACTION BRIDGE</div>
-                <div class="card-desc">Drag wooden planks to build a bridge — the total must match the gap!</div>
-            </a>
-            <a href="ratio.html" class="card ratio">
-                <div class="card-icon">🍎</div>
-                <div class="card-title">RATIO APPLES</div>
-                <div class="card-desc">Divide the apples between the children according to the exact ratio!</div>
-            </a>
-            <a href="space.html" class="card space">
-                <div class="card-icon">🚀</div>
-                <div class="card-title">PERCENT SPACE LAUNCH</div>
-                <div class="card-desc">Calculate the correct percentage of fuel to launch the rocket into orbit!</div>
-            </a>
-        </div>
-    </div>
+    <script>
+        // Set styling for game cards
+        document.querySelectorAll('.game-card').forEach(card => {
+            card.style.textDecoration = 'none';
+            card.style.color = 'var(--text-primary)';
+            card.style.display = 'block';
+        });
 
-    <div class="category">
-        <h2 class="category-title">🧮 Algebra & Pre-Algebra</h2>
-        <div class="cards">
-            <a href="balance.html" class="card balance">
-                <div class="card-icon">⚖️</div>
-                <div class="card-title">BALANCE SCALE</div>
-                <div class="card-desc">Solve for X by visually balancing the equation blocks!</div>
-            </a>
-            <a href="slime.html" class="card slime">
-                <div class="card-icon">🦠</div>
-                <div class="card-title">SLIME SPLITTER</div>
-                <div class="card-desc">Calculate Base and Exponent combinations to vaporize the slime!</div>
-            </a>
-        </div>
-    </div>
+        // Check authentication state on load
+        window.onload = () => {
+            const authStr = localStorage.getItem('auth');
+            if (authStr) {
+                const auth = JSON.parse(authStr);
+                document.getElementById('auth-btn').innerText = 'Logout';
+            }
+        };
 
-    <div class="category">
-        <h2 class="category-title">📐 Geometry & Graphing</h2>
-        <div class="cards">
-            <a href="asteroid.html" class="card asteroid">
-                <div class="card-icon">☄️</div>
-                <div class="card-title">ASTEROID TRAJECTORY</div>
-                <div class="card-desc">Graph the correct line (Y = MX + B) to fire the laser and destroy the asteroid!</div>
-            </a>
-            <a href="crystal.html" class="card crystal">
-                <div class="card-icon">💎</div>
-                <div class="card-title">CRYSTAL CARVER</div>
-                <div class="card-desc">Plot mirrored coordinates on the grid to complete the symmetrical crystal!</div>
-            </a>
-            <a href="laser.html" class="card laser">
-                <div class="card-icon">🪞</div>
-                <div class="card-title">LASER MIRRORS</div>
-                <div class="card-desc">Adjust the mirror's angle to reflect the laser beam into the target!</div>
-            </a>
-            <a href="tiles.html" class="card tiles">
-                <div class="card-icon">🧱</div>
-                <div class="card-title">TILE MATH</div>
-                <div class="card-desc">Place 3D tiles on the floor to learn area, volume, and multiplication!</div>
-            </a>
-            <a href="missile.html" class="card missile">
-                <div class="card-icon">🚀</div>
-                <div class="card-title">DESTROY THE SHIP</div>
-                <div class="card-desc">Type the exact coordinates of the enemy ship to fire your missile!</div>
-            </a>
-        </div>
-    </div>
+        function handleAuthClick(e) {
+            e.preventDefault();
+            const authStr = localStorage.getItem('auth');
+            if (authStr) {
+                // Logout
+                localStorage.removeItem('auth');
+                document.getElementById('auth-btn').innerText = 'Login';
+                alert('Logged out successfully.');
+            } else {
+                // Show login modal
+                document.getElementById('loginModal').style.display = 'flex';
+                document.getElementById('loginError').style.display = 'none';
+            }
+        }
+
+        async function doLogin() {
+            const phone = document.getElementById('loginPhone').value.trim();
+            if (!phone) return;
+
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone })
+                });
+                
+                const data = await res.json();
+                
+                if (!res.ok) {
+                    document.getElementById('loginError').innerText = data.error;
+                    document.getElementById('loginError').style.display = 'block';
+                    return;
+                }
+
+                if (!data.is_active) {
+                    document.getElementById('loginError').innerText = "Subscription expired or pending admin approval.";
+                    document.getElementById('loginError').style.display = 'block';
+                    return;
+                }
+
+                // Success
+                localStorage.setItem('auth', JSON.stringify(data));
+                document.getElementById('loginModal').style.display = 'none';
+                document.getElementById('auth-btn').innerText = 'Logout';
+                alert(`Welcome back, ${data.name}! You can now play games.`);
+            } catch (err) {
+                document.getElementById('loginError').innerText = "Server connection error.";
+                document.getElementById('loginError').style.display = 'block';
+            }
+        }
+
+        function checkAccess(e) {
+            const authStr = localStorage.getItem('auth');
+            if (!authStr) {
+                e.preventDefault();
+                alert('You need an active subscription to play. Please login or select a pricing plan.');
+                window.location.hash = 'pricing';
+                return;
+            }
+            const auth = JSON.parse(authStr);
+            if (!auth.is_active) {
+                e.preventDefault();
+                alert('Your subscription is not active. Please check your plan.');
+                window.location.hash = 'pricing';
+            }
+        }
+    </script>
 </body>
 </html>
