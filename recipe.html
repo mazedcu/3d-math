@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe Ratio — Scale the Ingredients</title>
+    <meta name="description" content="Given a recipe ratio and the amount of one or two ingredients, work out how much of the others you need.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <style>
+        html, body {
+            height: auto !important;
+            overflow-y: auto !important;
+        }
+        body {
+            min-height: 100vh;
+            background:
+                radial-gradient(circle at 15% 15%, #fde68a55, transparent 40%),
+                radial-gradient(circle at 85% 20%, #fca5a555, transparent 40%),
+                radial-gradient(circle at 50% 100%, #fdba7466, transparent 50%),
+                #fff7ed;
+            color: #3b2f2f;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 100px 16px 60px;
+        }
+
+        .recipe-card {
+            background: #ffffff;
+            border: 2px solid #f59e0b;
+            border-radius: 24px;
+            box-shadow: 0 18px 50px rgba(180, 83, 9, 0.18);
+            width: 100%;
+            max-width: 560px;
+            padding: 28px 26px 30px;
+            text-align: center;
+        }
+        .recipe-head { font-size: 1.6rem; font-weight: 800; color: #b45309; margin-bottom: 4px; }
+        .recipe-head .emoji { font-size: 2.2rem; display: block; margin-bottom: 4px; }
+        .recipe-sub { color: #92745b; font-size: 0.95rem; margin-bottom: 20px; }
+
+        .section-label {
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #a8826a;
+            margin: 18px 0 10px;
+        }
+
+        .ratio-row {
+            display: flex;
+            align-items: stretch;
+            justify-content: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .ratio-chip {
+            background: #fff7ed;
+            border: 2px solid #fcd34d;
+            border-radius: 16px;
+            padding: 10px 14px;
+            min-width: 78px;
+        }
+        .ratio-chip .ing-emoji { font-size: 1.5rem; }
+        .ratio-chip .ing-name { font-size: 0.8rem; font-weight: 600; color: #7c5a3f; }
+        .ratio-chip .ing-part { font-size: 1.6rem; font-weight: 800; color: #f59e0b; font-family: 'JetBrains Mono', monospace; }
+        .ratio-colon { display: flex; align-items: center; font-size: 1.8rem; font-weight: 800; color: #d1a05f; }
+
+        .given-row, .ask-row { display: flex; flex-direction: column; gap: 10px; align-items: center; }
+        .line {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            background: #fffbeb;
+            border-radius: 14px;
+            padding: 10px 16px;
+            width: 100%;
+            max-width: 360px;
+            justify-content: center;
+        }
+        .line.given { background: #ecfccb; border: 1px solid #bef264; }
+        .line .big { font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 1.3rem; color: #4d7c0f; }
+        .amount-input {
+            width: 90px;
+            padding: 8px 10px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            text-align: center;
+            border-radius: 10px;
+            border: 2px solid #f59e0b;
+            background: #fff;
+            color: #b45309;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .amount-input:focus { outline: none; border-color: #ef4444; }
+        .amount-input.correct { border-color: #16a34a; background: #f0fdf4; }
+        .amount-input.wrong { border-color: #ef4444; background: #fef2f2; }
+        .unit { color: #92745b; font-size: 0.95rem; }
+
+        .feedback { min-height: 1.4em; font-weight: 700; margin: 16px 0 4px; font-size: 1.05rem; }
+        .feedback.ok { color: #16a34a; }
+        .feedback.no { color: #ef4444; }
+
+        .action-btn {
+            background: linear-gradient(135deg, #f59e0b, #ef4444);
+            border: none; color: #fff; font-weight: 800; font-size: 1.05rem;
+            letter-spacing: 1px; padding: 13px 40px; border-radius: 14px; cursor: pointer;
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.3);
+            transition: transform 0.15s, box-shadow 0.15s; font-family: 'Outfit', sans-serif;
+            margin-top: 8px;
+        }
+        .action-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 26px rgba(239, 68, 68, 0.4); }
+    </style>
+</head>
+<body>
+    <!-- Top HUD -->
+    <div id="hud" class="hud">
+        <div class="hud-left">
+            <div class="stat accent" style="--accent-color: #f59e0b;">
+                <div class="stat-val" id="s-score">0</div>
+                <div class="stat-lbl">Score</div>
+            </div>
+            <div class="stat">
+                <div class="stat-val" id="s-round">1/8</div>
+                <div class="stat-lbl">Recipe</div>
+            </div>
+            <div class="stat">
+                <div class="stat-val" id="s-best">0</div>
+                <div class="stat-lbl">Best</div>
+            </div>
+        </div>
+        <div class="hud-right" style="display:flex; align-items:center;">
+            <h1 class="title"><span class="t1" style="color: #f59e0b;">RECIPE</span><span class="t2" style="color: #b45309;">RATIO</span></h1>
+            <a href="index.html" class="btn" style="text-decoration:none; margin-left: 10px; display:flex; align-items:center;">🏠 Menu</a>
+        </div>
+    </div>
+    <script>
+        if (window.self !== window.top) {
+            const menuBtn = document.querySelector('a[href="index.html"]');
+            if (menuBtn) menuBtn.style.display = 'none';
+        }
+    </script>
+
+    <!-- Recipe card -->
+    <div class="recipe-card" id="recipe-card"></div>
+
+    <!-- Notification -->
+    <div class="notify" id="notify"><span id="notify-text">Nice!</span></div>
+
+    <!-- Start / End Overlay -->
+    <div class="overlay visible" id="start-overlay">
+        <div class="count-box">
+            <div class="count-emoji">🍳</div>
+            <div class="count-title" id="game-end-title">Recipe Ratio</div>
+            <div class="count-result" id="game-end-desc" style="margin-bottom: 20px; color: rgba(0,0,0,0.7)">
+                Each recipe has ingredients mixed in a fixed <strong>ratio</strong>.
+                You'll be told how much of one or two ingredients you have &mdash;
+                work out how much of the others you need!
+            </div>
+            <button class="btn primary" id="btn-start" style="width: 100%">START COOKING</button>
+        </div>
+    </div>
+
+    <script src="recipe.js"></script>
+</body>
+</html>
