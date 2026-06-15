@@ -99,6 +99,29 @@ def login():
         "end_date": user.end_date.isoformat() if user.end_date else None
     }), 200
 
+@app.route('/api/status', methods=['POST'])
+def status():
+    data = request.json
+    email = data.get('email')
+    
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    is_active = False
+    if user.current_status == 'active' and user.end_date:
+        if user.end_date > datetime.datetime.utcnow():
+            is_active = True
+        else:
+            user.current_status = 'inactive'
+            db.session.commit()
+
+    return jsonify({
+        "is_active": is_active,
+        "end_date": user.end_date.isoformat() if user.end_date else None
+    }), 200
+
+
 @app.route('/api/forgot-password', methods=['POST'])
 def forgot_password():
     email = request.json.get('email')

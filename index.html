@@ -459,18 +459,15 @@
                     return;
                 }
 
-                if (!data.is_active) {
-                    errEl.innerText = "Subscription expired or pending admin approval.";
-                    errEl.style.display = 'block';
-                    // We still log them in so they can checkout, but they can't play games
-                }
-
                 // Success
                 localStorage.setItem('auth', JSON.stringify(data));
                 closeModals();
                 document.getElementById('auth-btn').innerText = 'Logout';
+                
                 if(data.is_active) {
                     alert(`Welcome back, ${data.name}! You can now play games.`);
+                } else {
+                    alert(`Logged in successfully, ${data.name}. Note: Your subscription is currently pending approval or expired.`);
                 }
             } catch (err) {
                 errEl.innerText = "Server connection error.";
@@ -653,20 +650,40 @@
             btn.innerText = "Submit Subscription";
         }
 
-        function checkAccess(e) {
+        async function checkAccess(e) {
+            e.preventDefault();
+            const href = e.currentTarget.href;
             const authStr = localStorage.getItem('auth');
             if (!authStr) {
-                e.preventDefault();
                 alert('You need an active subscription to play. Please login or select a pricing plan.');
                 window.location.hash = 'pricing';
                 return;
             }
-            const auth = JSON.parse(authStr);
+            
+            let auth = JSON.parse(authStr);
             if (!auth.is_active) {
-                e.preventDefault();
-                alert('Your subscription is not active. Please check your plan.');
-                window.location.hash = 'pricing';
+                try {
+                    const res = await fetch('/api/status', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: auth.email })
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.is_active) {
+                        auth.is_active = true;
+                        auth.end_date = data.end_date;
+                        localStorage.setItem('auth', JSON.stringify(auth));
+                    } else {
+                        alert('Your subscription is not active. If you recently paid, please wait for admin approval.');
+                        window.location.hash = 'pricing';
+                        return;
+                    }
+                } catch(err) {
+                    alert('Error checking subscription status.');
+                    return;
+                }
             }
+            window.location.href = href;
         }
     </script>
 </body>
