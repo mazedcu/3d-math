@@ -60,17 +60,7 @@
                         <option value="yearly">Yearly Plan (৳ 4000)</option>
                     </select>
                 </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Full Name</label>
-                    <input type="text" id="name" class="form-control" placeholder="Enter your full name" required>
-                </div>
 
-                <div class="form-group">
-                    <label class="form-label">Phone Number (Account ID)</label>
-                    <input type="text" id="phone" class="form-control" placeholder="e.g. 01712345678" required>
-                    <small style="color: var(--text-secondary); margin-top: 5px; display: block;">You will use this number to login.</small>
-                </div>
 
                 <div class="form-group">
                     <label class="form-label">bKash Transaction ID (TrxID)</label>
@@ -93,6 +83,17 @@
             document.getElementById('amount-display').innerText = '4000 BDT';
         }
 
+        const authStr = localStorage.getItem('auth');
+        let userEmail = null;
+
+        if (!authStr) {
+            alert('You must be logged in to subscribe! Redirecting to home...');
+            window.location.href = 'index.html';
+        } else {
+            const auth = JSON.parse(authStr);
+            userEmail = auth.email;
+        }
+
         async function submitPayment(e) {
             e.preventDefault();
             const submitBtn = document.getElementById('submitBtn');
@@ -103,8 +104,7 @@
 
             const payload = {
                 plan: plan,
-                name: document.getElementById('name').value.trim(),
-                phone: document.getElementById('phone').value.trim(),
+                email: userEmail,
                 trx_id: document.getElementById('trx_id').value.trim()
             };
 

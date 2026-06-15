@@ -3,6 +3,8 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 import os
 import datetime
+import uuid
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__, static_folder='.', static_url_path='')
 CORS(app)
@@ -17,7 +19,9 @@ db = SQLAlchemy(app)
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-    phone = db.Column(db.String(20), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password_hash = db.Column(db.String(256), nullable=False)
+    reset_token = db.Column(db.String(100), nullable=True)
     current_status = db.Column(db.String(20), default='inactive') # inactive, active
     end_date = db.Column(db.DateTime, nullable=True)
 
@@ -48,44 +52,36 @@ def serve_static(path):
         return send_from_directory('.', path)
     return "Not found", 404
 
-# API Endpoints
-
-@app.route('/api/subscribe', methods=['POST'])
-def subscribe():
+# Auth API Endpoints
+@app.route('/api/register', methods=['POST'])
+def register():
     data = request.json
     name = data.get('name')
-    phone = data.get('phone')
-    trx_id = data.get('trx_id')
-    plan = data.get('plan')
+    email = data.get('email')
+    password = data.get('password')
 
-    if not all([name, phone, trx_id, plan]):
+    if not all([name, email, password]):
         return jsonify({"error": "All fields are required"}), 400
 
-    user = User.query.filter_by(phone=phone).first()
-    if not user:
-        user = User(name=name, phone=phone)
-        db.session.add(user)
-        db.session.flush() # To get user.id
+    if User.query.filter_by(email=email).first():
+        return jsonify({"error": "Email already registered"}), 400
 
-    # Check if trx_id already exists
-    if Transaction.query.filter_by(trx_id=trx_id).first():
-        return jsonify({"error": "Transaction ID already used"}), 400
-
-    # Create transaction
-    trx = Transaction(user_id=user.id, trx_id=trx_id, plan=plan, status='pending')
-    db.session.add(trx)
+    hashed = generate_password_hash(password)
+    user = User(name=name, email=email, password_hash=hashed)
+    db.session.add(user)
     db.session.commit()
 
-    return jsonify({"message": "Subscription request submitted successfully! Awaiting admin approval."}), 201
+    return jsonify({"message": "Registration successful"}), 201
 
 @app.route('/api/login', methods=['POST'])
 def login():
     data = request.json
-    phone = data.get('phone')
+    email = data.get('email')
+    password = data.get('password')
     
-    user = User.query.filter_by(phone=phone).first()
-    if not user:
-        return jsonify({"error": "Phone number not registered"}), 404
+    user = User.query.filter_by(email=email).first()
+    if not user or not check_password_hash(user.password_hash, password):
+        return jsonify({"error": "Invalid email or password"}), 401
 
     # Check if subscription is still active
     is_active = False
@@ -98,10 +94,66 @@ def login():
 
     return jsonify({
         "name": user.name,
-        "phone": user.phone,
+        "email": user.email,
         "is_active": is_active,
         "end_date": user.end_date.isoformat() if user.end_date else None
     }), 200
+
+@app.route('/api/forgot-password', methods=['POST'])
+def forgot_password():
+    email = request.json.get('email')
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        # Don't reveal if email exists, just pretend it succeeded
+        return jsonify({"message": "If the email exists, a reset link has been provided."}), 200
+        
+    token = str(uuid.uuid4())
+    user.reset_token = token
+    db.session.commit()
+    
+    # In a real app we'd email this. Here we return it for demo purposes:
+    return jsonify({"message": "If the email exists, a reset link has been provided.", "demo_token": token}), 200
+
+@app.route('/api/reset-password', methods=['POST'])
+def reset_password():
+    data = request.json
+    token = data.get('token')
+    new_password = data.get('password')
+    
+    user = User.query.filter_by(reset_token=token).first()
+    if not user:
+        return jsonify({"error": "Invalid or expired token"}), 400
+        
+    user.password_hash = generate_password_hash(new_password)
+    user.reset_token = None
+    db.session.commit()
+    
+    return jsonify({"message": "Password reset successfully!"}), 200
+
+@app.route('/api/subscribe', methods=['POST'])
+def subscribe():
+    data = request.json
+    email = data.get('email')
+    trx_id = data.get('trx_id')
+    plan = data.get('plan')
+
+    if not all([email, trx_id, plan]):
+        return jsonify({"error": "Missing required fields"}), 400
+
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({"error": "User not found, please log in again"}), 401
+
+    # Check if trx_id already exists
+    if Transaction.query.filter_by(trx_id=trx_id).first():
+        return jsonify({"error": "Transaction ID already used"}), 400
+
+    # Create transaction
+    trx = Transaction(user_id=user.id, trx_id=trx_id, plan=plan, status='pending')
+    db.session.add(trx)
+    db.session.commit()
+
+    return jsonify({"message": "Subscription request submitted successfully! Awaiting admin approval."}), 201
 
 # Admin Authentication
 ADMIN_USER = 'admin'
@@ -136,11 +188,32 @@ def get_transactions():
         res.append({
             "id": t.id,
             "name": t.user.name,
-            "phone": t.user.phone,
+            "email": t.user.email,
             "trx_id": t.trx_id,
             "plan": t.plan,
             "status": t.status,
             "created_at": t.created_at.isoformat()
+        })
+    return jsonify(res), 200
+
+@app.route('/api/admin/users', methods=['GET'])
+@require_admin
+def get_users():
+    users = User.query.all()
+    res = []
+    now = datetime.datetime.utcnow()
+    for u in users:
+        days_left = 0
+        if u.current_status == 'active' and u.end_date:
+            delta = u.end_date - now
+            days_left = max(0, delta.days)
+            
+        res.append({
+            "id": u.id,
+            "name": u.name,
+            "email": u.email,
+            "status": u.current_status,
+            "days_left": days_left
         })
     return jsonify(res), 200
 
@@ -154,9 +227,7 @@ def approve_transaction(trx_id):
     trx.status = 'approved'
     user = trx.user
     
-    # Calculate new end date
     now = datetime.datetime.utcnow()
-    # If user already has an active sub, extend it. Otherwise, start from now.
     current_end = user.end_date if (user.end_date and user.end_date > now) else now
     
     if trx.plan == 'monthly':

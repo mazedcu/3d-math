@@ -194,20 +194,89 @@
         </div>
     </section>
 
+    <!-- Auth Modals -->
     <!-- Login Modal -->
     <div id="loginModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:1000; align-items:center; justify-content:center;">
-        <div class="card" style="width: 100%; max-width: 400px;">
+        <div class="card" style="width: 100%; max-width: 400px; position:relative;">
+            <button onclick="closeModals()" style="position:absolute; top:15px; right:15px; background:none; border:none; color:var(--text-secondary); cursor:pointer; font-size:1.2rem;">&times;</button>
             <h3 style="margin-bottom: 20px; font-size: 1.5rem;">Login</h3>
-            <p style="color: var(--text-secondary); margin-bottom: 20px;">Enter your registered phone number to access games.</p>
+            <p style="color: var(--text-secondary); margin-bottom: 20px;">Welcome back! Please login to access your games.</p>
             <div class="form-group">
-                <label class="form-label">Phone Number</label>
-                <input type="text" id="loginPhone" class="form-control" placeholder="e.g. 01712345678">
+                <label class="form-label">Email</label>
+                <input type="email" id="loginEmail" class="form-control" placeholder="your@email.com">
             </div>
-            <div style="display: flex; gap: 10px; margin-top: 20px;">
-                <button class="btn btn-outline" style="flex: 1;" onclick="document.getElementById('loginModal').style.display='none'">Cancel</button>
-                <button class="btn btn-primary" style="flex: 1;" onclick="doLogin()">Login</button>
+            <div class="form-group">
+                <label class="form-label">Password</label>
+                <input type="password" id="loginPassword" class="form-control" placeholder="••••••••">
             </div>
-            <p id="loginError" style="color: var(--danger); margin-top: 10px; font-size: 0.9rem; display: none;"></p>
+            <div style="text-align: right; margin-bottom: 20px;">
+                <a href="#" onclick="showModal('forgotModal')" style="color: var(--accent); font-size: 0.9rem; text-decoration: none;">Forgot Password?</a>
+            </div>
+            <div style="display: flex; gap: 10px; flex-direction: column;">
+                <button class="btn btn-primary" onclick="doLogin()">Login</button>
+                <div style="text-align: center; margin-top: 10px; font-size: 0.9rem;">
+                    Don't have an account? <a href="#" onclick="showModal('signupModal')" style="color: var(--accent); text-decoration: none;">Sign up</a>
+                </div>
+            </div>
+            <p id="loginError" style="color: var(--danger); margin-top: 10px; font-size: 0.9rem; display: none; text-align: center;"></p>
+        </div>
+    </div>
+
+    <!-- Sign Up Modal -->
+    <div id="signupModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:1000; align-items:center; justify-content:center;">
+        <div class="card" style="width: 100%; max-width: 400px; position:relative;">
+            <button onclick="closeModals()" style="position:absolute; top:15px; right:15px; background:none; border:none; color:var(--text-secondary); cursor:pointer; font-size:1.2rem;">&times;</button>
+            <h3 style="margin-bottom: 20px; font-size: 1.5rem;">Create Account</h3>
+            <div class="form-group">
+                <label class="form-label">Full Name</label>
+                <input type="text" id="signupName" class="form-control" placeholder="John Doe">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" id="signupEmail" class="form-control" placeholder="your@email.com">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Password</label>
+                <input type="password" id="signupPassword" class="form-control" placeholder="••••••••">
+            </div>
+            <div style="display: flex; gap: 10px; flex-direction: column; margin-top: 20px;">
+                <button class="btn btn-primary" onclick="doSignup()">Sign Up</button>
+                <div style="text-align: center; margin-top: 10px; font-size: 0.9rem;">
+                    Already have an account? <a href="#" onclick="showModal('loginModal')" style="color: var(--accent); text-decoration: none;">Login</a>
+                </div>
+            </div>
+            <p id="signupError" style="color: var(--danger); margin-top: 10px; font-size: 0.9rem; display: none; text-align: center;"></p>
+        </div>
+    </div>
+
+    <!-- Forgot Password Modal -->
+    <div id="forgotModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:1000; align-items:center; justify-content:center;">
+        <div class="card" style="width: 100%; max-width: 400px; position:relative;">
+            <button onclick="closeModals()" style="position:absolute; top:15px; right:15px; background:none; border:none; color:var(--text-secondary); cursor:pointer; font-size:1.2rem;">&times;</button>
+            <h3 style="margin-bottom: 20px; font-size: 1.5rem;">Reset Password</h3>
+            <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 0.9rem;">Enter your email and we'll provide a reset link.</p>
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" id="forgotEmail" class="form-control" placeholder="your@email.com">
+            </div>
+            <button class="btn btn-primary" style="width: 100%; margin-bottom: 10px;" onclick="doForgot()">Get Reset Link</button>
+            <a href="#" onclick="showModal('loginModal')" style="display:block; text-align:center; color: var(--text-secondary); text-decoration: none; font-size: 0.9rem;">Back to Login</a>
+            <div id="forgotResult" style="margin-top: 15px; font-size: 0.9rem; display: none; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 5px;"></div>
+        </div>
+    </div>
+
+    <!-- Reset Password Modal -->
+    <div id="resetModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:1000; align-items:center; justify-content:center;">
+        <div class="card" style="width: 100%; max-width: 400px; position:relative;">
+            <button onclick="closeModals()" style="position:absolute; top:15px; right:15px; background:none; border:none; color:var(--text-secondary); cursor:pointer; font-size:1.2rem;">&times;</button>
+            <h3 style="margin-bottom: 20px; font-size: 1.5rem;">New Password</h3>
+            <input type="hidden" id="resetToken">
+            <div class="form-group">
+                <label class="form-label">New Password</label>
+                <input type="password" id="resetPassword" class="form-control" placeholder="••••••••">
+            </div>
+            <button class="btn btn-primary" style="width: 100%;" onclick="doReset()">Set New Password</button>
+            <p id="resetError" style="color: var(--danger); margin-top: 10px; font-size: 0.9rem; display: none; text-align: center;"></p>
         </div>
     </div>
 
@@ -228,6 +297,18 @@
             }
         };
 
+        function closeModals() {
+            document.getElementById('loginModal').style.display = 'none';
+            document.getElementById('signupModal').style.display = 'none';
+            document.getElementById('forgotModal').style.display = 'none';
+            document.getElementById('resetModal').style.display = 'none';
+        }
+
+        function showModal(id) {
+            closeModals();
+            document.getElementById(id).style.display = 'flex';
+        }
+
         function handleAuthClick(e) {
             e.preventDefault();
             const authStr = localStorage.getItem('auth');
@@ -237,45 +318,155 @@
                 document.getElementById('auth-btn').innerText = 'Login';
                 alert('Logged out successfully.');
             } else {
-                // Show login modal
-                document.getElementById('loginModal').style.display = 'flex';
+                showModal('loginModal');
                 document.getElementById('loginError').style.display = 'none';
             }
         }
 
+        async function doSignup() {
+            const name = document.getElementById('signupName').value.trim();
+            const email = document.getElementById('signupEmail').value.trim();
+            const password = document.getElementById('signupPassword').value.trim();
+            const errEl = document.getElementById('signupError');
+
+            if (!name || !email || !password) {
+                errEl.innerText = "All fields are required.";
+                errEl.style.display = 'block';
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, password })
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    errEl.innerText = data.error;
+                    errEl.style.display = 'block';
+                    return;
+                }
+                
+                // Login automatically after signup
+                document.getElementById('loginEmail').value = email;
+                document.getElementById('loginPassword').value = password;
+                doLogin();
+            } catch (err) {
+                errEl.innerText = "Server connection error.";
+                errEl.style.display = 'block';
+            }
+        }
+
         async function doLogin() {
-            const phone = document.getElementById('loginPhone').value.trim();
-            if (!phone) return;
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+            const errEl = document.getElementById('loginError');
+
+            if (!email || !password) {
+                errEl.innerText = "Email and Password are required.";
+                errEl.style.display = 'block';
+                return;
+            }
 
             try {
                 const res = await fetch('/api/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ phone })
+                    body: JSON.stringify({ email, password })
                 });
                 
                 const data = await res.json();
                 
                 if (!res.ok) {
-                    document.getElementById('loginError').innerText = data.error;
-                    document.getElementById('loginError').style.display = 'block';
+                    errEl.innerText = data.error;
+                    errEl.style.display = 'block';
                     return;
                 }
 
                 if (!data.is_active) {
-                    document.getElementById('loginError').innerText = "Subscription expired or pending admin approval.";
-                    document.getElementById('loginError').style.display = 'block';
-                    return;
+                    errEl.innerText = "Subscription expired or pending admin approval.";
+                    errEl.style.display = 'block';
+                    // We still log them in so they can checkout, but they can't play games
                 }
 
                 // Success
                 localStorage.setItem('auth', JSON.stringify(data));
-                document.getElementById('loginModal').style.display = 'none';
+                closeModals();
                 document.getElementById('auth-btn').innerText = 'Logout';
-                alert(`Welcome back, ${data.name}! You can now play games.`);
+                if(data.is_active) {
+                    alert(`Welcome back, ${data.name}! You can now play games.`);
+                }
             } catch (err) {
-                document.getElementById('loginError').innerText = "Server connection error.";
-                document.getElementById('loginError').style.display = 'block';
+                errEl.innerText = "Server connection error.";
+                errEl.style.display = 'block';
+            }
+        }
+
+        async function doForgot() {
+            const email = document.getElementById('forgotEmail').value.trim();
+            const resEl = document.getElementById('forgotResult');
+            
+            if (!email) {
+                resEl.style.color = "var(--danger)";
+                resEl.innerText = "Please enter your email.";
+                resEl.style.display = 'block';
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/forgot-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+                const data = await res.json();
+                
+                resEl.style.color = "var(--success)";
+                if (data.demo_token) {
+                    resEl.innerHTML = `${data.message}<br><br><a href="#" onclick="openReset('${data.demo_token}')" style="color:var(--accent);">Click here to reset password (Demo)</a>`;
+                } else {
+                    resEl.innerText = data.message;
+                }
+                resEl.style.display = 'block';
+            } catch (err) {
+                resEl.style.color = "var(--danger)";
+                resEl.innerText = "Server connection error.";
+                resEl.style.display = 'block';
+            }
+        }
+
+        function openReset(token) {
+            document.getElementById('resetToken').value = token;
+            showModal('resetModal');
+        }
+
+        async function doReset() {
+            const token = document.getElementById('resetToken').value;
+            const password = document.getElementById('resetPassword').value.trim();
+            const errEl = document.getElementById('resetError');
+
+            if (!password) return;
+
+            try {
+                const res = await fetch('/api/reset-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token, password })
+                });
+                const data = await res.json();
+                
+                if (!res.ok) {
+                    errEl.innerText = data.error;
+                    errEl.style.display = 'block';
+                    return;
+                }
+                
+                alert("Password reset successfully. Please login.");
+                showModal('loginModal');
+            } catch(err) {
+                errEl.innerText = "Server connection error.";
+                errEl.style.display = 'block';
             }
         }
 
