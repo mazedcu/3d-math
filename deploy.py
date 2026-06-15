@@ -20,8 +20,9 @@ def run_cmd(ssh, cmd):
 
 nginx_config = """
 server {
+    listen 80;
     listen 8080;
-    server_name _;
+    server_name numberfield.xyz www.numberfield.xyz;
 
     root /var/www/html;
     index index.html;
@@ -61,11 +62,13 @@ try:
     print("Connected successfully!")
     
     print("\n--- Installing Dependencies ---")
-    run_cmd(ssh, 'apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y nginx python3-pip python3-venv git')
+    run_cmd(ssh, 'apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y nginx python3-pip python3-venv git certbot python3-certbot-nginx')
     
     print("\n--- Deploying Math Hub ---")
+    run_cmd(ssh, 'cp /var/www/html/database.db /tmp/database_backup.db || true')
     run_cmd(ssh, 'rm -rf /var/www/html')
     run_cmd(ssh, 'git clone https://github.com/mazedcu/3d-math.git /var/www/html')
+    run_cmd(ssh, 'cp /tmp/database_backup.db /var/www/html/database.db || true')
     
     print("\n--- Setting up Python Virtual Environment ---")
     run_cmd(ssh, 'cd /var/www/html && python3 -m venv venv')
@@ -76,6 +79,9 @@ try:
     run_cmd(ssh, 'ln -sf /etc/nginx/sites-available/3d-math /etc/nginx/sites-enabled/')
     run_cmd(ssh, 'rm -f /etc/nginx/sites-enabled/default')
     run_cmd(ssh, 'systemctl restart nginx')
+    
+    print("\n--- Setting up SSL/TLS ---")
+    run_cmd(ssh, 'certbot --nginx -d numberfield.xyz -d www.numberfield.xyz --non-interactive --agree-tos -m mazedcu@gmail.com || true')
 
     print("\n--- Configuring Systemd Service ---")
     run_cmd(ssh, f"cat << 'EOF' > /etc/systemd/system/mathhub.service\n{systemd_service}EOF")
