@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marble Probability</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #1e1b4b; /* Dark purple background */
+            color: white;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        #c {
+            width: 100%;
+            height: 100vh;
+            display: block;
+        }
+
+        .ui-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* Let clicks pass through to 3D canvas if needed */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            box-sizing: border-box;
+        }
+
+        .header {
+            text-align: center;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 15px 40px;
+            border-radius: 20px;
+            pointer-events: auto;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .prompt {
+            font-size: 1.5rem;
+            margin-top: 10px;
+        }
+
+        .score-board {
+            font-size: 1.2rem;
+            color: #fde047;
+            margin-top: 5px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 40px;
+            pointer-events: auto;
+            margin-bottom: 40px;
+        }
+
+        .btn-jar {
+            background: #4f46e5;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.5rem;
+            border-radius: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #3730a3;
+            transition: transform 0.1s;
+        }
+
+        .btn-jar:active {
+            transform: translateY(6px);
+            box-shadow: 0 0 0 #3730a3;
+        }
+
+        /* Flash animations */
+        .flash-red {
+            animation: flashR 0.5s ease-out forwards;
+        }
+        @keyframes flashR {
+            0% { box-shadow: inset 0 0 150px #ef4444; }
+            100% { box-shadow: inset 0 0 0 transparent; }
+        }
+
+        .flash-green {
+            animation: flashG 0.5s ease-out forwards;
+        }
+        @keyframes flashG {
+            0% { box-shadow: inset 0 0 150px #10b981; }
+            100% { box-shadow: inset 0 0 0 transparent; }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="c"></canvas>
+
+    <div class="ui-overlay" id="overlay">
+        <a href="index.html" class="btn" style="position: absolute; top: 20px; left: 20px; pointer-events: auto;">🏠 Menu</a>
+        
+        <div class="header">
+            <h1 style="margin: 0; color: #fbbf24; font-size: 2rem;">MARBLE PROBABILITY</h1>
+            <div class="prompt" id="prompt-text">Which jar gives you a better chance to pull a <span id="target-color-name" style="font-weight: bold;">RED</span> marble?</div>
+            <div class="score-board">Score: <span id="score">0</span></div>
+        </div>
+
+        <div class="controls">
+            <button class="btn-jar" id="btn-jar-a">JAR A (Left)</button>
+            <button class="btn-jar" id="btn-jar-b">JAR B (Right)</button>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div class="notify" id="notify" style="z-index: 100;">
+        <span id="notify-text">Correct!</span>
+    </div>
+
+    <!-- Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.163.0/examples/jsm/"
+        }
+    }
+    </script>
+    <script type="module" src="marbles.js"></script>
+</body>
+</html>
