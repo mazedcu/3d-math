@@ -93,6 +93,7 @@
                             <th>Email</th>
                             <th>Status</th>
                             <th>Days Left</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody id="usersTableBody">
@@ -262,6 +263,9 @@
                         <td>${u.email}</td>
                         <td><span class="status-badge ${statusClass}">${u.status}</span></td>
                         <td><strong style="color: var(--accent);">${u.days_left}</strong> days</td>
+                        <td class="action-btns">
+                            <button class="btn btn-outline btn-small" style="color: var(--danger); border-color: var(--danger); padding: 5px 10px; font-size: 0.8rem;" onclick="deleteUser(${u.id})">Delete</button>
+                        </td>
                     `;
                     tbody.appendChild(row);
                 });
@@ -286,6 +290,31 @@
                 
                 if (res.ok) {
                     fetchTransactions(); // Refresh
+                } else {
+                    const data = await res.json();
+                    alert("Error: " + data.error);
+                }
+            } catch (err) {
+                alert("Server connection error.");
+            }
+        }
+
+        async function deleteUser(id) {
+            if (!confirm(`Are you sure you want to completely delete user #${id} and all their transactions? This cannot be undone.`)) return;
+
+            try {
+                const res = await fetch(`/api/admin/users/${id}`, {
+                    method: 'DELETE',
+                    headers: getAuthHeaders()
+                });
+
+                if (res.status === 401) {
+                    doAdminLogout();
+                    return;
+                }
+
+                if (res.ok) {
+                    fetchUsers(); // Refresh
                 } else {
                     const data = await res.json();
                     alert("Error: " + data.error);

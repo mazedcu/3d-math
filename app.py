@@ -217,6 +217,18 @@ def get_users():
         })
     return jsonify(res), 200
 
+@app.route('/api/admin/users/<int:user_id>', methods=['DELETE'])
+@require_admin
+def delete_user(user_id):
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+        
+    Transaction.query.filter_by(user_id=user.id).delete()
+    db.session.delete(user)
+    db.session.commit()
+    return jsonify({"message": "User deleted successfully"}), 200
+
 @app.route('/api/admin/transactions/<int:trx_id>/approve', methods=['POST'])
 @require_admin
 def approve_transaction(trx_id):
