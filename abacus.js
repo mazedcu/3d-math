@@ -25,12 +25,141 @@ let currentAnswer = 0;
 let currentPoints = 10;
 
 // ---- Challenge Generator ----
+// Weighted pool: addition & subtraction appear much more often
 const CHALLENGE_TYPES = [
-    genAddition,
-    genSubtraction,
-    genShowNumber,
-    genMultiplySmall,
+    // Addition — 5 slots
+    genAddition, genAddition, genAdditionThreeNums, genAdditionLarge, genAdditionChain,
+    // Subtraction — 5 slots
+    genSubtraction, genSubtraction, genSubtractionFromRound, genSubtractionLarge, genSubtractionChain,
+    // Mixed add/sub — 3 slots
+    genMixedAddSub, genMixedAddSub, genMixedAddSub,
+    // Others — 2 slots
+    genShowNumber, genMultiplySmall,
 ];
+
+// --- Addition variants ---
+
+function genAddition() {
+    const a = randInt(10, 499);
+    const b = randInt(10, 499);
+    return {
+        type: 'ADDITION',
+        text: `<span style="color:#fbbf24">${a}</span> + <span style="color:#34d399">${b}</span> = ?`,
+        answer: a + b,
+        hint: `Add ${a} and ${b}, then set the total on the abacus!`,
+        points: 15,
+    };
+}
+
+function genAdditionLarge() {
+    const a = randInt(100, 900);
+    const b = randInt(100, 9999 - a);
+    return {
+        type: 'ADDITION',
+        text: `<span style="color:#fbbf24">${a}</span> + <span style="color:#34d399">${b}</span> = ?`,
+        answer: a + b,
+        hint: `Add ${a} and ${b} — the answer may reach the thousands!`,
+        points: 20,
+    };
+}
+
+function genAdditionThreeNums() {
+    const a = randInt(10, 200);
+    const b = randInt(10, 200);
+    const c = randInt(10, 200);
+    return {
+        type: 'ADDITION',
+        text: `<span style="color:#fbbf24">${a}</span> + <span style="color:#34d399">${b}</span> + <span style="color:#60a5fa">${c}</span> = ?`,
+        answer: a + b + c,
+        hint: `Add all three numbers together!`,
+        points: 20,
+    };
+}
+
+function genAdditionChain() {
+    // Start from a base, give clue like "I have X apples. I get Y more. Then Z more."
+    const base = randInt(5, 100);
+    const add1 = randInt(5, 100);
+    const add2 = randInt(5, 100);
+    return {
+        type: 'ADDITION STORY',
+        text: `Ali has <span style="color:#fbbf24">${base}</span> apples. He gets <span style="color:#34d399">${add1}</span> more, then <span style="color:#60a5fa">${add2}</span> more. How many does he have?`,
+        answer: base + add1 + add2,
+        hint: `${base} + ${add1} + ${add2} = ?`,
+        points: 20,
+    };
+}
+
+// --- Subtraction variants ---
+
+function genSubtraction() {
+    const a = randInt(20, 500);
+    const b = randInt(1, a - 1);
+    return {
+        type: 'SUBTRACTION',
+        text: `<span style="color:#fbbf24">${a}</span> − <span style="color:#f87171">${b}</span> = ?`,
+        answer: a - b,
+        hint: `Subtract ${b} from ${a}!`,
+        points: 15,
+    };
+}
+
+function genSubtractionLarge() {
+    const a = randInt(500, 9999);
+    const b = randInt(100, a - 1);
+    return {
+        type: 'SUBTRACTION',
+        text: `<span style="color:#fbbf24">${a}</span> − <span style="color:#f87171">${b}</span> = ?`,
+        answer: a - b,
+        hint: `Subtract ${b} from ${a} — use all four columns!`,
+        points: 20,
+    };
+}
+
+function genSubtractionFromRound() {
+    const rounds = [100, 200, 500, 1000];
+    const a = rounds[Math.floor(Math.random() * rounds.length)];
+    const b = randInt(1, a - 1);
+    return {
+        type: 'SUBTRACTION',
+        text: `<span style="color:#fbbf24">${a}</span> − <span style="color:#f87171">${b}</span> = ?`,
+        answer: a - b,
+        hint: `Subtract from a round number!`,
+        points: 15,
+    };
+}
+
+function genSubtractionChain() {
+    const start = randInt(100, 500);
+    const sub1 = randInt(10, Math.floor(start / 3));
+    const sub2 = randInt(10, Math.floor(start / 3));
+    return {
+        type: 'SUBTRACTION STORY',
+        text: `A shop has <span style="color:#fbbf24">${start}</span> items. It sells <span style="color:#f87171">${sub1}</span>, then <span style="color:#f87171">${sub2}</span> more. How many remain?`,
+        answer: start - sub1 - sub2,
+        hint: `${start} − ${sub1} − ${sub2} = ?`,
+        points: 20,
+    };
+}
+
+// --- Mixed Add & Subtract ---
+
+function genMixedAddSub() {
+    const a = randInt(50, 400);
+    const b = randInt(10, 300);
+    const c = randInt(10, Math.min(a + b - 1, 300));
+    const ans = a + b - c;
+    if (ans <= 0 || ans > 9999) return genAddition(); // safety fallback
+    return {
+        type: 'ADD & SUBTRACT',
+        text: `<span style="color:#fbbf24">${a}</span> + <span style="color:#34d399">${b}</span> − <span style="color:#f87171">${c}</span> = ?`,
+        answer: ans,
+        hint: `First add ${a} + ${b} = ${a+b}, then subtract ${c}!`,
+        points: 25,
+    };
+}
+
+// --- Others ---
 
 function genShowNumber() {
     const n = randInt(1, 999);
@@ -43,41 +172,18 @@ function genShowNumber() {
     };
 }
 
-function genAddition() {
-    const a = randInt(1, 499);
-    const b = randInt(1, 499);
-    return {
-        type: 'ADDITION',
-        text: `What is <span style="color:#fbbf24">${a}</span> + <span style="color:#34d399">${b}</span> ?`,
-        answer: a + b,
-        hint: `Calculate ${a} + ${b}, then set the answer on the abacus!`,
-        points: 15,
-    };
-}
-
-function genSubtraction() {
-    const a = randInt(50, 999);
-    const b = randInt(1, a);
-    return {
-        type: 'SUBTRACTION',
-        text: `What is <span style="color:#fbbf24">${a}</span> − <span style="color:#f87171">${b}</span> ?`,
-        answer: a - b,
-        hint: `Calculate ${a} − ${b}, then set the answer on the abacus!`,
-        points: 15,
-    };
-}
-
 function genMultiplySmall() {
     const a = randInt(2, 9);
     const b = randInt(2, 9);
     return {
         type: 'MULTIPLICATION',
-        text: `What is <span style="color:#fbbf24">${a}</span> × <span style="color:#c084fc">${b}</span> ?`,
+        text: `<span style="color:#fbbf24">${a}</span> × <span style="color:#c084fc">${b}</span> = ?`,
         answer: a * b,
         hint: `Calculate ${a} × ${b}, then set the answer on the abacus!`,
         points: 20,
     };
 }
+
 
 function randInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
