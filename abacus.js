@@ -308,26 +308,70 @@ function updateTotal() {
 function resetAbacus() {
     state = COLUMNS.map(() => ({ heaven: 0, earth: [0, 0, 0, 0] }));
     renderAbacus();
+    clearCheck();
     playTone(300, 'sine', 0.15, 0.05);
 }
 
-// ---- Check Answer ----
-function checkAnswer() {
+// ---- Check & Submit ----
+let lastCheckCorrect = false;
+
+function doCheck() {
     const abacusVal = getAbacusValue();
+    const resultEl = document.getElementById('check-result');
+    const submitBtn = document.getElementById('btn-submit');
+
     if (abacusVal === currentAnswer) {
         // Correct!
-        score += currentPoints;
-        streak++;
-        document.getElementById('score-val').textContent = score;
-        document.getElementById('streak-val').textContent = streak;
-        showHurray();
+        lastCheckCorrect = true;
+        resultEl.className = 'correct';
+        resultEl.textContent = `✓ Correct! ${abacusVal.toLocaleString()} is right!`;
+        submitBtn.disabled = false;
+        playTone(600, 'sine', 0.2, 0.1);
+        // Glow the total display green
+        document.getElementById('total-display').style.color = '#34d399';
+        document.getElementById('total-display').style.textShadow = '0 0 20px rgba(52,211,153,0.6)';
     } else {
         // Wrong
-        streak = 0;
-        document.getElementById('streak-val').textContent = streak;
-        showWrong(abacusVal);
+        lastCheckCorrect = false;
+        submitBtn.disabled = true;
+        resultEl.className = 'wrong';
+        resultEl.textContent = `✗ Got ${abacusVal.toLocaleString()}, not quite — try again!`;
+        playErrorSound();
+        // Flash red overlay
+        const flash = document.getElementById('wrong-flash');
+        flash.classList.add('show');
+        setTimeout(() => flash.classList.remove('show'), 300);
+        // Reset total display colour
+        document.getElementById('total-display').style.color = '';
+        document.getElementById('total-display').style.textShadow = '';
     }
 }
+
+function doSubmit() {
+    if (!lastCheckCorrect) return;
+    // Score and advance
+    score += currentPoints;
+    streak++;
+    document.getElementById('score-val').textContent = score;
+    document.getElementById('streak-val').textContent = streak;
+    // Clear check state
+    clearCheck();
+    showHurray();
+}
+
+function clearCheck() {
+    lastCheckCorrect = false;
+    const resultEl = document.getElementById('check-result');
+    resultEl.className = '';
+    resultEl.textContent = '';
+    document.getElementById('btn-submit').disabled = true;
+    document.getElementById('total-display').style.color = '';
+    document.getElementById('total-display').style.textShadow = '';
+}
+
+// Keep old name for any legacy references
+function checkAnswer() { doCheck(); }
+
 
 // ---- Hurray Effect ----
 function showHurray() {

@@ -355,6 +355,21 @@
             transform: translateY(6px);
             box-shadow: 0 0 0 #047857;
         }
+        .btn-submit:disabled {
+            background: linear-gradient(135deg, #374151, #1f2937);
+            box-shadow: none;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        .btn-check {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+            box-shadow: 0 6px 0 #1d4ed8, 0 10px 20px rgba(59,130,246,0.3);
+        }
+        .btn-check:active {
+            transform: translateY(6px);
+            box-shadow: 0 0 0 #1d4ed8;
+        }
         .btn-reset {
             background: rgba(255,255,255,0.1);
             color: rgba(255,255,255,0.7);
@@ -364,6 +379,31 @@
             font-size: 1rem;
         }
         .btn-reset:hover { background: rgba(255,255,255,0.15); }
+
+        /* Check result badge */
+        #check-result {
+            text-align: center;
+            font-size: 1rem;
+            font-weight: 700;
+            padding: 6px 16px;
+            border-radius: 10px;
+            margin-top: 6px;
+            opacity: 0;
+            transition: opacity 0.2s;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        #check-result.correct {
+            background: rgba(16,185,129,0.2);
+            color: #34d399;
+            border: 1px solid rgba(16,185,129,0.4);
+            opacity: 1;
+        }
+        #check-result.wrong {
+            background: rgba(239,68,68,0.2);
+            color: #f87171;
+            border: 1px solid rgba(239,68,68,0.4);
+            opacity: 1;
+        }
 
         /* --- Overlays --- */
         #hurray-overlay {
@@ -486,12 +526,16 @@
 
         <!-- Total + Controls -->
         <div id="abacus-total-area">
-            <div>
+            <div style="flex:1;">
                 <div class="total-label">Abacus Value</div>
                 <div id="total-display">0</div>
+                <div id="check-result"></div>
             </div>
-            <button class="action-btn btn-reset" onclick="resetAbacus()">↺ Reset</button>
-            <button class="action-btn btn-submit" onclick="checkAnswer()">✓ Submit</button>
+            <div style="display:flex;flex-direction:column;gap:10px;">
+                <button class="action-btn btn-check" id="btn-check" onclick="doCheck()">🔍 Check</button>
+                <button class="action-btn btn-submit" id="btn-submit" onclick="doSubmit()" disabled>✓ Submit</button>
+            </div>
+            <button class="action-btn btn-reset" onclick="resetAbacus()" style="padding:14px 16px;font-size:1rem;">↺ Reset</button>
         </div>
     </div>
 
