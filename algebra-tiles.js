@@ -322,16 +322,20 @@ function updateStepBar() {
 }
 
 function checkTileMatch() {
-    // Is x isolated? Left side has one x and no units, right side has answer units and no xs
+    // Isolate x-terms: one side has only x's, the other has only units, and it's mathematically correct.
     const lX = leftTiles.filter(t => t === 'x').length - leftTiles.filter(t => t === '-x').length;
     const lU = leftTiles.filter(t => t === '1').length - leftTiles.filter(t => t === '-1').length;
     
     const rX = rightTiles.filter(t => t === 'x').length - rightTiles.filter(t => t === '-x').length;
     const rU = rightTiles.filter(t => t === '1').length - rightTiles.filter(t => t === '-1').length;
 
-    // Check if simplified to x = answer (or similar valid forms)
-    // Most standard: left has 1x, right has answer
-    return (lX === 1 && lU === 0 && rX === 0 && rU === currentEq.answer);
+    // Left side isolated: lU = 0, rX = 0
+    const leftIsolated = (lU === 0 && rX === 0 && lX !== 0 && (rU / lX) === currentEq.answer);
+    
+    // Right side isolated: rU = 0, lX = 0
+    const rightIsolated = (rU === 0 && lX === 0 && rX !== 0 && (lU / rX) === currentEq.answer);
+
+    return leftIsolated || rightIsolated;
 }
 
 // ---------- Check Answer ----------
