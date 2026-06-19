@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cosmic Jumper 3D</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <style>
+        /* Space backdrop */
+        body { background: #05060f; }
+        #c { background: radial-gradient(circle at 50% 30%, #15183a 0%, #05060f 70%); }
+
+        .stat-jump { border-color: rgba(6, 182, 212, 0.25); }
+        .stat-jump .stat-val { color: var(--cyan); }
+        .stat-target { border-color: rgba(245, 158, 11, 0.25); }
+        .stat-target .stat-val { color: var(--amber); }
+
+        /* Start screen (bottom-left) */
+        #start-screen {
+            position: fixed; bottom: 28px; left: 24px; z-index: 300;
+            display: flex; flex-direction: column; gap: 10px;
+            background: var(--surface); backdrop-filter: blur(16px);
+            border: 1px solid var(--border); border-radius: 18px;
+            padding: 16px 20px; max-width: 320px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+            transition: opacity 0.4s, transform 0.4s;
+        }
+        #start-screen.hidden { opacity: 0; transform: translateY(20px); pointer-events: none; }
+        .start-title { font-size: 1rem; font-weight: 800; color: var(--text); }
+        .start-desc { font-size: 0.75rem; color: var(--dim); line-height: 1.5; }
+
+        /* Answer panel (bottom center) */
+        #answer-panel {
+            position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%); z-index: 50;
+            display: flex; align-items: center; gap: 12px;
+            background: var(--surface); backdrop-filter: blur(16px);
+            border: 1px solid var(--border); border-radius: 18px;
+            padding: 14px 20px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+            transition: opacity 0.4s, transform 0.4s;
+        }
+        #answer-panel.hidden { opacity: 0; transform: translateX(-50%) translateY(20px); pointer-events: none; }
+        .ap-question { font-size: 0.9rem; font-weight: 700; color: var(--text); max-width: 320px; line-height: 1.35; }
+        .ap-question b { color: var(--cyan); }
+        .ap-question span { color: var(--amber); }
+        #answer-input {
+            width: 90px; padding: 10px 12px; border-radius: 12px;
+            border: 2px solid var(--border); background: rgba(255,255,255,0.9);
+            font-family: var(--fm); font-size: 1.3rem; font-weight: 700; text-align: center;
+            color: var(--text); outline: none;
+        }
+        #answer-input:focus { border-color: var(--cyan); }
+
+        /* Result banner */
+        #result {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); z-index: 200;
+            text-align: center; padding: 28px 44px; border-radius: 22px;
+            background: rgba(255,255,255,0.96); backdrop-filter: blur(16px);
+            box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+            opacity: 0; pointer-events: none; transition: opacity 0.3s;
+        }
+        #result.show { opacity: 1; pointer-events: all; }
+        .res-title { font-size: 2.2rem; font-weight: 900; margin-bottom: 8px; }
+        .res-title.win { color: var(--emerald); }
+        .res-title.fail { color: var(--rose); }
+        .res-desc { font-size: 1rem; color: var(--dim); margin-bottom: 18px; max-width: 360px; }
+    </style>
+</head>
+<body>
+    <canvas id="c"></canvas>
+
+    <!-- HUD -->
+    <div id="hud" class="hud">
+        <div class="hud-left">
+            <div class="stat stat-jump">
+                <div class="stat-val" id="s-jump">-</div>
+                <div class="stat-lbl">Tiles / Jump</div>
+            </div>
+            <div class="stat stat-target">
+                <div class="stat-val" id="s-target">-</div>
+                <div class="stat-lbl">Target Tile</div>
+            </div>
+        </div>
+        <div class="hud-right">
+            <h1 class="title"><span class="t2">COSMIC</span> <span style="color:var(--amber)">JUMPER</span></h1>
+            <a href="index.html" class="btn" style="text-decoration:none; display:flex; align-items:center;">🏠 Menu</a>
+        </div>
+    </div>
+
+    <!-- Start screen -->
+    <div id="start-screen">
+        <div class="start-title">🚀 Leap Across the Stars!</div>
+        <div class="start-desc">A boy stands on tile&nbsp;1. He lands a fixed number of tiles further with every jump. Work out how many jumps land him exactly on the target tile — get it wrong and he falls into the abyss!</div>
+        <button class="btn primary" id="btn-start">Start</button>
+    </div>
+
+    <!-- Answer panel -->
+    <div id="answer-panel" class="hidden">
+        <div class="ap-question" id="ap-question"></div>
+        <input id="answer-input" type="number" min="1" placeholder="?">
+        <button class="btn primary" id="btn-check">Jump!</button>
+    </div>
+
+    <!-- Result -->
+    <div id="result">
+        <div class="res-title win" id="res-title">YOU MADE IT!</div>
+        <div class="res-desc" id="res-desc"></div>
+        <button class="btn primary" id="btn-next">Play Again</button>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.163.0/examples/jsm/"
+        }
+    }
+    </script>
+    <script type="module" src="jump.js?v=1"></script>
+</body>
+</html>
