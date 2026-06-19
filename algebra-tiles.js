@@ -82,7 +82,27 @@ function updateEquationDisplay() {
     const lStr = formatExpression(lX, lU);
     const rStr = formatExpression(rX, rU);
     
-    document.getElementById('problem-eq').textContent = `${lStr} = ${rStr}`;
+    document.getElementById('live-eq').textContent = `${lStr} = ${rStr}`;
+    
+    // Check if current layout is mathematically equivalent to the original equation
+    const statusEl = document.getElementById('live-eq-status');
+    const xDiff = lX - rX;
+    const uDiff = rU - lU;
+    
+    if (xDiff === 0) {
+        if (uDiff === 0) {
+            statusEl.innerHTML = '<span style="color:#fbbf24">⚠️ 0 = 0 (True, but where is x?)</span>';
+        } else {
+            statusEl.innerHTML = '<span style="color:#f87171">❌ Unbalanced</span>';
+        }
+    } else {
+        const currentAnswer = uDiff / xDiff;
+        if (Math.abs(currentAnswer - currentEq.answer) < 0.0001) {
+            statusEl.innerHTML = '<span style="color:#34d399">✅ Balanced</span>';
+        } else {
+            statusEl.innerHTML = '<span style="color:#f87171">❌ Unbalanced</span>';
+        }
+    }
 }
 
 // ---------- Reset Workspace ----------
