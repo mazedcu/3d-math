@@ -24,7 +24,8 @@ const EQUATIONS = [
 let score  = 0;
 let streak = 0;
 let currentEq = null;
-let leftTiles = []; // array of type strings placed on left panel
+let leftTiles = [];  // array of type strings placed on left panel
+let rightTiles = []; // array of type strings placed on right panel
 
 // ---------- Drag State ----------
 let dragging = false;
@@ -45,43 +46,28 @@ function loadEquation() {
 
     document.getElementById('problem-eq').textContent = currentEq.eq;
     document.getElementById('answer-input').value = '';
-    clearFeedback();
     resetWorkspace();
-    buildRHS();
-    updateStepBar();
-}
-
-function buildRHS() {
-    const panel = document.getElementById('right-panel');
-    // Remove old rhs tiles (keep ws-label)
-    [...panel.querySelectorAll('.rhs-tile')].forEach(t => t.remove());
-
-    const n = currentEq.rhs;
-    // Show up to 10 unit tiles, then just a label
-    if (n <= 10) {
-        for (let i = 0; i < n; i++) {
-            const t = document.createElement('div');
-            t.className = 'rhs-tile';
-            t.textContent = '1';
-            panel.appendChild(t);
-        }
-    } else {
-        const t = document.createElement('div');
-        t.className = 'rhs-tile';
-        t.style.width = '70px';
-        t.style.fontSize = '1.1rem';
-        t.style.fontFamily = "'JetBrains Mono',monospace";
-        t.textContent = n;
-        panel.appendChild(t);
-    }
 }
 
 // ---------- Reset Workspace ----------
 function resetWorkspace() {
-    leftTiles = [];
-    const panel = document.getElementById('left-panel');
-    [...panel.querySelectorAll('.placed-tile')].forEach(t => t.remove());
     clearFeedback();
+    leftTiles = Array(currentEq.xCoeff).fill(currentEq.xCoeff > 0 ? 'x' : '-x');
+    if (currentEq.constant > 0) {
+        leftTiles.push(...Array(currentEq.constant).fill('1'));
+    } else if (currentEq.constant < 0) {
+        leftTiles.push(...Array(Math.abs(currentEq.constant)).fill('-1'));
+    }
+
+    rightTiles = [];
+    if (currentEq.rhs > 0) {
+        rightTiles.push(...Array(currentEq.rhs).fill('1'));
+    } else if (currentEq.rhs < 0) {
+        rightTiles.push(...Array(Math.abs(currentEq.rhs)).fill('-1'));
+    }
+
+    renderLeftPanel();
+    renderRightPanel();
     updateStepBar();
 }
 
@@ -127,42 +113,52 @@ function onPointerMove(e) {
     if (!dragging) return;
     moveGhost(e.clientX, e.clientY);
 
-    // Highlight left panel when hovering
     const leftPanel = document.getElementById('left-panel');
-    const rect = leftPanel.getBoundingClientRect();
-    const over = e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom;
-    leftPanel.classList.toggle('drag-over', over);
+    const rightPanel = document.getElementById('right-panel');
+    const lRect = leftPanel.getBoundingClientRect();
+    const rRect = rightPanel.getBoundingClientRect();
+
+    const overL = e.clientX >= lRect.left && e.clientX <= lRect.right && e.clientY >= lRect.top && e.clientY <= lRect.bottom;
+    const overR = e.clientX >= rRect.left && e.clientX <= rRect.right && e.clientY >= rRect.top && e.clientY <= rRect.bottom;
+
+    leftPanel.classList.toggle('drag-over', overL);
+    rightPanel.classList.toggle('drag-over', overR);
 }
 
 function onPointerUp(e) {
     if (!dragging) return;
     dragging = false;
     ghost.style.display = 'none';
-    document.getElementById('left-panel').classList.remove('drag-over');
+
+    const leftPanel = document.getElementById('left-panel');
+    const rightPanel = document.getElementById('right-panel');
+    leftPanel.classList.remove('drag-over');
+    rightPanel.classList.remove('drag-over');
 
     document.removeEventListener('pointermove', onPointerMove);
     document.removeEventListener('pointerup', onPointerUp);
 
-    // Check if dropped over left panel
-    const leftPanel = document.getElementById('left-panel');
-    const rect = leftPanel.getBoundingClientRect();
-    const over = e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom;
+    const lRect = leftPanel.getBoundingClientRect();
+    const rRect = rightPanel.getBoundingClientRect();
+    const overL = e.clientX >= lRect.left && e.clientX <= lRect.right && e.clientY >= lRect.top && e.clientY <= lRect.bottom;
+    const overR = e.clientX >= rRect.left && e.clientX <= rRect.right && e.clientY >= rRect.top && e.clientY <= rRect.bottom;
 
-    if (over) {
-        placeTile(dragType);
-    }
+    if (overL) placeTile('left', dragType);
+    else if (overR) placeTile('right', dragType);
 }
 
 // ---------- Setup Drop Zone (HTML5 fallback) ----------
 function setupDropZone() {
-    const panel = document.getElementById('left-panel');
-    panel.addEventListener('dragover', e => { e.preventDefault(); panel.classList.add('drag-over'); });
-    panel.addEventListener('dragleave', () => panel.classList.remove('drag-over'));
-    panel.addEventListener('drop', e => {
-        e.preventDefault();
-        panel.classList.remove('drag-over');
-        const type = e.dataTransfer.getData('text/plain');
-        if (type) placeTile(type);
+    ['left', 'right'].forEach(side => {
+        const panel = document.getElementById(side + '-panel');
+        panel.addEventListener('dragover', e => { e.preventDefault(); panel.classList.add('drag-over'); });
+        panel.addEventListener('dragleave', () => panel.classList.remove('drag-over'));
+        panel.addEventListener('drop', e => {
+            e.preventDefault();
+            panel.classList.remove('drag-over');
+            const type = e.dataTransfer.getData('text/plain');
+            if (type) placeTile(side, type);
+        });
     });
 
     document.querySelectorAll('.tray-tile').forEach(el => {
@@ -173,44 +169,49 @@ function setupDropZone() {
     });
 }
 
-// ---------- Place Tile ----------
-function placeTile(type) {
-    leftTiles.push(type);
-    renderLeftPanel();
-    playTone(400, 'sine', 0.08, 0.06);
+// ---------- Place Tile & Cancellation ----------
+function placeTile(side, type) {
+    const arr = side === 'left' ? leftTiles : rightTiles;
+    
+    // Zero-pair cancellation logic
+    const opp = type === '1' ? '-1' : type === '-1' ? '1' : type === 'x' ? '-x' : 'x';
+    const oppIdx = arr.indexOf(opp);
+    
+    if (oppIdx !== -1) {
+        // Cancel out!
+        arr.splice(oppIdx, 1);
+        playTone(600, 'sine', 0.1, 0.05); // slightly different sound for cancel
+    } else {
+        arr.push(type);
+        playTone(400, 'sine', 0.08, 0.06);
+    }
+
+    if (side === 'left') renderLeftPanel();
+    else renderRightPanel();
+
     clearFeedback();
     updateStepBar();
 }
 
 function renderLeftPanel() {
-    const panel = document.getElementById('left-panel');
+    renderPanel('left-panel', leftTiles);
+}
+
+function renderRightPanel() {
+    renderPanel('right-panel', rightTiles);
+}
+
+function renderPanel(panelId, arr) {
+    const panel = document.getElementById(panelId);
     [...panel.querySelectorAll('.placed-tile')].forEach(t => t.remove());
 
-    leftTiles.forEach((type, idx) => {
+    arr.forEach((type, idx) => {
         const tile = document.createElement('div');
         const cls = type === 'x' ? 'tile-x' : type === '-x' ? 'tile-nx' : type === '1' ? 'tile-1' : 'tile-n1';
         tile.className = `placed-tile ${cls}`;
         tile.textContent = type === 'x' ? 'x' : type === '-x' ? '−x' : type === '1' ? '1' : '−1';
-
-        const rmBtn = document.createElement('div');
-        rmBtn.className = 'remove-btn';
-        rmBtn.textContent = '×';
-        rmBtn.addEventListener('click', e => {
-            e.stopPropagation();
-            leftTiles.splice(idx, 1);
-            renderLeftPanel();
-            clearFeedback();
-            updateStepBar();
-        });
-
-        tile.appendChild(rmBtn);
-        tile.addEventListener('click', () => {
-            leftTiles.splice(idx, 1);
-            renderLeftPanel();
-            clearFeedback();
-            updateStepBar();
-        });
-
+        
+        // No remove button anymore — must use zero-pairs!
         panel.appendChild(tile);
     });
 }
@@ -231,10 +232,16 @@ function updateStepBar() {
 }
 
 function checkTileMatch() {
-    if (leftTiles.length === 0) return false;
-    const xNet = leftTiles.filter(t => t === 'x').length - leftTiles.filter(t => t === '-x').length;
-    const unitNet = leftTiles.filter(t => t === '1').length - leftTiles.filter(t => t === '-1').length;
-    return xNet === currentEq.xCoeff && unitNet === currentEq.constant;
+    // Is x isolated? Left side has one x and no units, right side has answer units and no xs
+    const lX = leftTiles.filter(t => t === 'x').length - leftTiles.filter(t => t === '-x').length;
+    const lU = leftTiles.filter(t => t === '1').length - leftTiles.filter(t => t === '-1').length;
+    
+    const rX = rightTiles.filter(t => t === 'x').length - rightTiles.filter(t => t === '-x').length;
+    const rU = rightTiles.filter(t => t === '1').length - rightTiles.filter(t => t === '-1').length;
+
+    // Check if simplified to x = answer (or similar valid forms)
+    // Most standard: left has 1x, right has answer
+    return (lX === 1 && lU === 0 && rX === 0 && rU === currentEq.answer);
 }
 
 // ---------- Check Answer ----------
