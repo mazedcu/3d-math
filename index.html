@@ -153,6 +153,18 @@
                 <button onclick="openCheckout('yearly')" class="btn btn-primary" style="width: 100%;">Select Yearly</button>
             </div>
         </div>
+
+        <!-- Free Trial CTA -->
+        <div style="text-align:center; margin-top: 30px;">
+            <div style="display:inline-block; background: rgba(255,255,255,0.04); border: 1px dashed rgba(255,255,255,0.2); border-radius: 20px; padding: 20px 40px;">
+                <div style="font-size: 1.5rem; margin-bottom: 6px;">🎁</div>
+                <div style="font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 6px;">Wanna try for 3 days for free?</div>
+                <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 16px;">No payment needed. Full access to all games for 3 days.</div>
+                <button onclick="openTrialModal()" class="btn btn-outline" style="border-color: #34d399; color: #34d399; font-size:1rem; padding: 12px 32px;">
+                    🚀 Start Free Trial
+                </button>
+            </div>
+        </div>
     </section>
 
     <section id="games" class="container" style="padding-top: 0;">
@@ -462,6 +474,35 @@
             </div>
             <button class="btn btn-primary" style="width: 100%;" onclick="doReset()">Set New Password</button>
             <p id="resetError" style="color: var(--danger); margin-top: 10px; font-size: 0.9rem; display: none; text-align: center;"></p>
+        </div>
+    </div>
+
+    <!-- Free Trial Modal -->
+    <div class="overlay" id="trial-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:1000; align-items:center; justify-content:center;">
+        <div class="card" style="width: 100%; max-width: 440px; position:relative; margin:auto;">
+            <button onclick="closeModals()" style="position:absolute; top:15px; right:15px; background:none; border:none; color:var(--text-secondary); cursor:pointer; font-size:1.2rem;">&times;</button>
+            <h3 style="margin-bottom: 5px; font-size: 1.5rem; text-align: center;">🎁 Start Your Free Trial</h3>
+            <p style="text-align:center; color:var(--text-secondary); margin-bottom:20px; font-size:0.95rem;">3 days full access — no payment required. After 3 days you'll be prompted to subscribe.</p>
+
+            <div class="form-group">
+                <label class="form-label">Full Name</label>
+                <input type="text" id="trial-name" class="form-control" placeholder="Your name">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" id="trial-email" class="form-control" placeholder="your@email.com">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Password</label>
+                <input type="password" id="trial-password" class="form-control" placeholder="Create a password">
+            </div>
+
+            <p id="trial-error" style="color:var(--danger); font-size:0.9rem; display:none; margin-top:8px;"></p>
+            <p id="trial-success" style="color:#34d399; font-size:0.9rem; display:none; margin-top:8px;"></p>
+
+            <button class="btn btn-primary" style="width:100%; margin-top:16px; background:linear-gradient(135deg,#10b981,#059669); box-shadow: 0 6px 0 #047857;" onclick="submitTrial()" id="trial-submit-btn">
+                🚀 Activate Free Trial
+            </button>
         </div>
     </div>
 
@@ -884,12 +925,72 @@
             btn.innerText = "Submit Subscription";
         }
 
+        function openTrialModal() {
+            closeModals();
+            const m = document.getElementById('trial-modal');
+            m.style.display = 'flex';
+        }
+
+        async function submitTrial() {
+            const btn = document.getElementById('trial-submit-btn');
+            const errEl = document.getElementById('trial-error');
+            const succEl = document.getElementById('trial-success');
+            errEl.style.display = 'none';
+            succEl.style.display = 'none';
+
+            const name = document.getElementById('trial-name').value.trim();
+            const email = document.getElementById('trial-email').value.trim();
+            const password = document.getElementById('trial-password').value;
+
+            if (!name || !email || !password) {
+                errEl.innerText = 'All fields are required.';
+                errEl.style.display = 'block';
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerText = 'Starting trial...';
+
+            try {
+                const res = await fetch('/api/trial/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, password })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    // Log them in immediately
+                    localStorage.setItem('auth', JSON.stringify({
+                        name: data.name,
+                        email: data.email,
+                        is_active: true,
+                        is_trial: true,
+                        days_left: 3,
+                        end_date: data.end_date
+                    }));
+                    succEl.innerText = '🎉 Trial activated! Full access for 3 days. Redirecting...';
+                    succEl.style.display = 'block';
+                    updateAuthUI();
+                    setTimeout(() => closeModals(), 2000);
+                } else {
+                    errEl.innerText = data.error || 'Registration failed.';
+                    errEl.style.display = 'block';
+                }
+            } catch (err) {
+                errEl.innerText = 'Server error. Please try again.';
+                errEl.style.display = 'block';
+            }
+
+            btn.disabled = false;
+            btn.innerText = '🚀 Activate Free Trial';
+        }
+
         async function checkAccess(e) {
             e.preventDefault();
             const href = e.currentTarget.href;
             const authStr = localStorage.getItem('auth');
             if (!authStr) {
-                alert('You need an active subscription to play. Please login or select a pricing plan.');
+                alert('You need an active subscription to play. Please login or start a free trial.');
                 window.location.hash = 'pricing';
                 return;
             }
@@ -908,8 +1009,14 @@
                         auth.end_date = data.end_date;
                         localStorage.setItem('auth', JSON.stringify(auth));
                     } else {
-                        alert('Your subscription is not active. If you recently paid, please wait for admin approval.');
-                        window.location.hash = 'pricing';
+                        // Check if trial expired
+                        if (auth.is_trial) {
+                            const proceed = confirm('⏰ Your 3-day free trial has ended!\n\nTo keep playing, please subscribe using bKash.\n\nClick OK to go to the pricing page.');
+                            if (proceed) window.location.hash = 'pricing';
+                        } else {
+                            alert('Your subscription is not active. If you recently paid, please wait for admin approval.');
+                            window.location.hash = 'pricing';
+                        }
                         return;
                     }
                 } catch(err) {

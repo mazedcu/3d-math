@@ -212,6 +212,40 @@ def register():
 
     return jsonify({"message": "Registration successful"}), 201
 
+@app.route('/api/trial/register', methods=['POST'])
+def trial_register():
+    data = request.json
+    name = data.get('name')
+    email = data.get('email')
+    password = data.get('password')
+
+    if not all([name, email, password]):
+        return jsonify({"error": "All fields are required"}), 400
+
+    if User.query.filter_by(email=email).first():
+        return jsonify({"error": "Email already registered"}), 400
+
+    hashed = generate_password_hash(password)
+    trial_end = datetime.datetime.utcnow() + datetime.timedelta(days=3)
+    user = User(
+        name=name,
+        email=email,
+        password_hash=hashed,
+        current_status='active',
+        end_date=trial_end
+    )
+    db.session.add(user)
+    db.session.commit()
+
+    return jsonify({
+        "message": "Trial started!",
+        "name": user.name,
+        "email": user.email,
+        "is_active": True,
+        "is_trial": True,
+        "end_date": trial_end.isoformat()
+    }), 201
+
 @app.route('/api/login', methods=['POST'])
 def login():
     data = request.json
@@ -224,17 +258,25 @@ def login():
 
     # Check if subscription is still active
     is_active = False
+    now = datetime.datetime.utcnow()
     if user.current_status == 'active' and user.end_date:
-        if user.end_date > datetime.datetime.utcnow():
+        if user.end_date > now:
             is_active = True
         else:
             user.current_status = 'inactive'
             db.session.commit()
 
+    # Determine trial status (trial users have no paid transaction)
+    has_paid = any(t.status == 'approved' for t in user.transactions)
+    is_trial = is_active and not has_paid
+    days_left = max(0, (user.end_date - now).days) if user.end_date and is_active else 0
+
     return jsonify({
         "name": user.name,
         "email": user.email,
         "is_active": is_active,
+        "is_trial": is_trial,
+        "days_left": days_left,
         "end_date": user.end_date.isoformat() if user.end_date else None
     }), 200
 
@@ -248,6 +290,7 @@ def status():
         return jsonify({"error": "User not found"}), 404
 
     is_active = False
+    now = datetime.datetime.utcnow()
     if user.current_status == 'active' and user.end_date:
         if user.end_date > datetime.datetime.utcnow():
             is_active = True
