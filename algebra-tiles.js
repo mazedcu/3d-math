@@ -157,10 +157,10 @@ function setupTrayDrag() {
 
 function buildTileStyle(type) {
     const base = 'border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:800;font-family:JetBrains Mono,monospace;color:white;box-shadow:3px 5px 15px rgba(0,0,0,0.5);';
-    if (type === 'x')  return base + 'width:50px;height:100px;background:linear-gradient(135deg,#6d28d9,#a855f7);font-size:1.1rem;';
-    if (type === '-x') return base + 'width:50px;height:100px;background:linear-gradient(135deg,#7f1d1d,#ef4444);font-size:1.1rem;';
-    if (type === '1')  return base + 'width:50px;height:50px;background:linear-gradient(135deg,#065f46,#10b981);font-size:1.2rem;';
-    return              base + 'width:50px;height:50px;background:linear-gradient(135deg,#7c2d12,#f97316);font-size:1.2rem;';
+    if (type === 'x')  return base + 'width:46px;height:120px;background:linear-gradient(135deg,#6d28d9,#a855f7);font-size:1.1rem;';
+    if (type === '-x') return base + 'width:46px;height:120px;background:linear-gradient(135deg,#7f1d1d,#ef4444);font-size:1.1rem;';
+    if (type === '1')  return base + 'width:46px;height:46px;background:linear-gradient(135deg,#065f46,#10b981);font-size:1.2rem;';
+    return              base + 'width:46px;height:46px;background:linear-gradient(135deg,#7c2d12,#f97316);font-size:1.2rem;';
 }
 
 function moveGhost(x, y) {
