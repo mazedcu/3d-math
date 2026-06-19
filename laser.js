@@ -68,8 +68,11 @@ function generateRound() {
     beamOut.style.width = '0';
     beamOut.style.transition = 'none'; // reset without animation
     
-    // Pick random target angle
-    targetAngle = possibleTargets[Math.floor(Math.random() * possibleTargets.length)];
+    let newAngle;
+    do {
+        newAngle = possibleTargets[Math.floor(Math.random() * possibleTargets.length)];
+    } while (newAngle === targetAngle);
+    targetAngle = newAngle;
     
     // Position target
     // Center of mirror is at (400, 250) in game-area
