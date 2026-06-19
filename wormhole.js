@@ -16,6 +16,22 @@ const GAME_TIME = 60;
 const BASE_SPEED = 38;
 const MAX_SPEED = 75;
 
+// ─── Audio ───────────────────────────────────────────
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function playTone(freq, type, duration, vol=0.1) {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + duration);
+}
+
 // ─── DOM ─────────────────────────────────────────────
 const $ = id => document.getElementById(id);
 const canvas = $('c');
@@ -289,6 +305,7 @@ function loop() {
             if (d < 1.6) {
                 n.hit = true;
                 if (n.prime) {
+                    playTone(150, 'sawtooth', 0.5, 0.2);
                     lives--;
                     updateLives();
                     flashRed();
@@ -296,6 +313,8 @@ function loop() {
                         endGame(false, `${n.num} is PRIME — it ripped your ship apart. Score: ${score}`);
                     }
                 } else {
+                    playTone(800, 'sine', 0.1, 0.1);
+                    setTimeout(() => playTone(1200, 'sine', 0.2, 0.1), 100);
                     score++;
                     dom.sScore.textContent = score;
                 }
