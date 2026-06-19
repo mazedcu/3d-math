@@ -424,7 +424,7 @@ function animate(time) {
     spawnTimer -= dt;
     if (spawnTimer <= 0) {
         spawnNumber();
-        spawnTimer = 1.0 + Math.random() * 1.0; // Every 1-2 seconds
+        spawnTimer = 2.5 + Math.random() * 2.0; // Every 2.5-4.5 seconds
     }
 
     // Update bullets (moving +X)
