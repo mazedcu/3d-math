@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Factor Shooter</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #020617;
+            font-family: 'Outfit', sans-serif;
+            color: white;
+            /* Disable text selection */
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        #c {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: block;
+            cursor: none; /* Hide default cursor */
+        }
+
+        /* Crosshair */
+        #crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 40px;
+            height: 40px;
+            margin-left: -20px;
+            margin-top: -20px;
+            pointer-events: none;
+            z-index: 10;
+        }
+        .cross-line-h {
+            position: absolute;
+            top: 18px;
+            left: 0;
+            width: 40px;
+            height: 4px;
+            background: rgba(239, 68, 68, 0.8);
+            border-radius: 2px;
+        }
+        .cross-line-v {
+            position: absolute;
+            left: 18px;
+            top: 0;
+            width: 4px;
+            height: 40px;
+            background: rgba(239, 68, 68, 0.8);
+            border-radius: 2px;
+        }
+        .cross-center {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            width: 8px;
+            height: 8px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #ef4444;
+        }
+
+        /* HUD */
+        .hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            pointer-events: none;
+            z-index: 20;
+        }
+
+        .hud-box {
+            background: rgba(15, 23, 42, 0.8);
+            border: 2px solid #334155;
+            padding: 15px 25px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+
+        .target-display {
+            font-size: 1.5rem;
+            color: #94a3b8;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .target-num {
+            font-size: 4rem;
+            font-family: 'JetBrains Mono', monospace;
+            color: #fde047;
+            text-shadow: 0 0 20px rgba(253, 224, 71, 0.5);
+            line-height: 1;
+        }
+
+        .score-lives {
+            text-align: right;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .score-val { color: #38bdf8; font-family: 'JetBrains Mono', monospace; }
+        .lives-val { color: #ef4444; letter-spacing: 5px; margin-top: 10px;}
+
+        /* Flash damage effect */
+        .damage-flash {
+            position: absolute;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(239, 68, 68, 0.3);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.1s;
+            z-index: 5;
+        }
+        .damage-flash.on { opacity: 1; }
+
+        /* Game Over */
+        .game-over {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            background: rgba(15, 23, 42, 0.95);
+            border: 2px solid #ef4444;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(239, 68, 68, 0.2);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 100;
+        }
+        .game-over.show {
+            opacity: 1;
+            pointer-events: all;
+            transform: translate(-50%, -50%) scale(1);
+        }
+        
+    </style>
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+    <a href="index.html" class="btn" style="text-decoration:none; z-index: 50; position: absolute; bottom: 20px; left: 20px;">🏠 Menu</a>
+
+    <!-- Canvas -->
+    <canvas id="c"></canvas>
+
+    <div class="damage-flash" id="flash"></div>
+
+    <div id="crosshair">
+        <div class="cross-line-h"></div>
+        <div class="cross-line-v"></div>
+        <div class="cross-center"></div>
+    </div>
+
+    <div class="hud">
+        <div class="hud-box">
+            <div class="target-display">TARGET NUMBER</div>
+            <div class="target-num" id="s-target">--</div>
+            <div style="color: #ef4444; font-weight: bold; margin-top: 10px; font-size: 1.1rem;">SHOOT NON-FACTORS!</div>
+        </div>
+        <div class="hud-box" style="text-align: right;">
+            <div>SCORE: <span class="score-val" id="s-score">0</span></div>
+            <div class="lives-val" id="s-lives">♥♥♥</div>
+        </div>
+    </div>
+
+    <!-- Start / Rule Overlay -->
+    <div class="overlay visible" id="start-screen" style="z-index: 100;">
+        <div class="count-box" style="background: #0f172a; border-color: #38bdf8;">
+            <div class="count-emoji">🥫</div>
+            <div class="count-title" style="color: #38bdf8; font-size: 2rem;">FACTOR SHOOTER</div>
+            <div class="count-result" style="margin-bottom: 20px; color: rgba(255,255,255,0.7); font-size: 1.1rem; line-height: 1.5;">
+                Shoot down cans that are <strong>NOT FACTORS</strong> of the target number.<br><br>
+                <span style="color: #ef4444;">Do NOT shoot factors!</span><br>
+                <span style="color: #ef4444;">Do NOT let non-factors fall off-screen!</span>
+            </div>
+            <button class="btn primary" id="btn-start" style="width: 100%;">START SHOOTING</button>
+        </div>
+    </div>
+
+    <!-- Game Over Overlay -->
+    <div class="game-over" id="game-over">
+        <div style="font-size: 3rem; margin-bottom: 10px;">💥</div>
+        <h2 style="font-size: 2.5rem; color: #ef4444; margin: 0 0 10px 0;">GAME OVER</h2>
+        <p id="go-desc" style="font-size: 1.2rem; color: #94a3b8; margin-bottom: 30px;"></p>
+        <button class="btn primary" onclick="location.reload()" style="background: #ef4444; box-shadow: 0 6px 0 #b91c1c;">PLAY AGAIN</button>
+    </div>
+
+    <script src="cans.js"></script>
+</body>
+</html>
