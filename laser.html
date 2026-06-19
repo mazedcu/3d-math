@@ -238,10 +238,12 @@
     <script>
         function resizeApp() {
             const ww = window.innerWidth;
-            const scale = Math.min(1, ww / 840);
+            const wh = window.innerHeight;
+            // Scale based on both width (840px needed) and height (800px needed)
+            const scale = Math.min(1, ww / 840, wh / 800);
             const wrapper = document.getElementById('scale-wrapper');
             wrapper.style.transform = `scale(${scale})`;
-            wrapper.style.marginBottom = `-${(1 - scale) * 750}px`;
+            wrapper.style.marginBottom = `-${(1 - scale) * 800}px`;
         }
         window.addEventListener('resize', resizeApp);
         resizeApp();
