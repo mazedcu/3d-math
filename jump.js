@@ -108,14 +108,16 @@ function makeTextSprite(text, color = '#ffffff', bold = true) {
 }
 
 // ─── Game constants ──────────────────────────────────
-const TARGET = 81;          // target tile number
-const COLS = 9;             // tiles per zigzag row (9 × 9 = 81)
+const COLS = 9;             // tiles per zigzag row
 const SP = 2.6;             // tile spacing
 const ROW_GAP = 1.45;       // depth multiplier between rows
 const RISE = 0.55;          // how much each row rises into space
-const TILE_TOP = 0.55;      // boy's feet sit at this height above a tile centre
-// Jump sizes must divide (TARGET - 1) = 80 so the boy can land exactly on 81.
-const JUMP_SIZES = [4, 5, 8, 10, 16, 20];
+// Boy's feet rest exactly on the top face of a tile.
+// Tile box is 0.4 tall (top = centre + 0.2); the boy's feet sit ~0.03 below his origin.
+const FEET_OFFSET = 0.23;
+// A round is built so an exact answer always exists: target = 1 + jumpSize * jumps.
+const JUMP_CHOICES = [2, 3, 4, 5, 6, 7, 8];
+const JUMPS_MIN = 4, JUMPS_MAX = 11;
 
 // Tile index (1-based) → world position of its centre
 function tilePos(i) {
@@ -136,12 +138,13 @@ const tileMeshes = [];
 
 let jumpSize = 8;
 let correctJumps = 10;
+let targetTile = 81;        // randomized each round
 let busy = false;           // animating
 let started = false;
 
 // Boy position helper: feet on top of a tile
 function standPos(i) {
-    return tilePos(i).clone().add(new THREE.Vector3(0, TILE_TOP, 0));
+    return tilePos(i).clone().add(new THREE.Vector3(0, FEET_OFFSET, 0));
 }
 
 // ─── Build the boy ───────────────────────────────────
@@ -186,10 +189,10 @@ function buildPath() {
     const targetMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.35, metalness: 0.3, emissive: 0x7c4a02, emissiveIntensity: 0.7 });
     const tileGeo = new THREE.BoxGeometry(2.0, 0.4, 2.0);
 
-    for (let i = 1; i <= TARGET; i++) {
+    for (let i = 1; i <= targetTile; i++) {
         let mat = baseMat;
         if (i === 1) mat = startMat;
-        else if (i === TARGET) mat = targetMat;
+        else if (i === targetTile) mat = targetMat;
         const t = new THREE.Mesh(tileGeo, mat.clone());
         t.position.copy(tilePos(i));
         t.castShadow = true;
@@ -199,7 +202,7 @@ function buildPath() {
         tileMeshes.push(t);
 
         // number label floating above each tile
-        const col = (i === 1) ? '#a7f3d0' : (i === TARGET) ? '#fde68a' : '#e2e8f0';
+        const col = (i === 1) ? '#a7f3d0' : (i === targetTile) ? '#fde68a' : '#e2e8f0';
         const lbl = makeTextSprite(`${i}`, col);
         lbl.scale.set(1.1, 1.1, 1);
         lbl.position.copy(tilePos(i)).add(new THREE.Vector3(0, 0.95, 0));
@@ -211,8 +214,10 @@ function buildPath() {
 
 // ─── Round setup ─────────────────────────────────────
 function newRound() {
-    jumpSize = JUMP_SIZES[Math.floor(Math.random() * JUMP_SIZES.length)];
-    correctJumps = (TARGET - 1) / jumpSize;
+    // Random jump size and jump count → derive a target so the answer is always exact.
+    jumpSize = JUMP_CHOICES[Math.floor(Math.random() * JUMP_CHOICES.length)];
+    correctJumps = JUMPS_MIN + Math.floor(Math.random() * (JUMPS_MAX - JUMPS_MIN + 1));
+    targetTile = 1 + jumpSize * correctJumps;
     buildPath();
 
     boy.visible = true;
@@ -221,10 +226,10 @@ function newRound() {
     boy.lookAt(tilePos(1 + jumpSize).x, boy.position.y, tilePos(1 + jumpSize).z);
 
     dom.sJump.textContent = jumpSize;
-    dom.sTarget.textContent = TARGET;
+    dom.sTarget.textContent = targetTile;
     dom.apQuestion.innerHTML =
         `The boy is on tile&nbsp;1 and lands <b>${jumpSize}</b> tiles further each jump. ` +
-        `How many jumps reach tile&nbsp;<span>${TARGET}</span> exactly?`;
+        `How many jumps reach tile&nbsp;<span>${targetTile}</span> exactly?`;
     dom.answerInput.value = '';
 
     camFollow.copy(boy.position);
@@ -301,11 +306,11 @@ function crumbleAction(tileIdx) {
     };
 }
 
-// free fall into the abyss (tumbling)
-function fallAction(forward) {
-    const vx = forward ? (boy.getWorldDirection(new THREE.Vector3()).x) * 4 : 0;
-    const vz = forward ? (boy.getWorldDirection(new THREE.Vector3()).z) * 4 : 0;
-    let vy = forward ? 4 : 0;
+// free fall into the abyss (tumbling). `vel` is an optional horizontal launch velocity.
+function fallAction(vel) {
+    const vx = vel ? vel.x : 0;
+    const vz = vel ? vel.z : 0;
+    let vy = vel ? 4 : 0;
     return {
         dur: 2.2,
         init() {},
@@ -362,14 +367,17 @@ function runGuess(guess) {
     let cur = 1;
     let overshoot = false;
 
+    const span = targetTile - 1;   // total tiles between start and target
+
     for (let k = 0; k < guess; k++) {
         const next = cur + jumpSize;
-        if (next > TARGET) {
-            // No tile out there — leap into empty space, then fall.
-            const dir = tilePos(cur).clone().sub(tilePos(cur - jumpSize)).normalize();
-            const phantom = standPos(cur).add(dir.multiplyScalar(SP * ROW_GAP * 1.1)).add(new THREE.Vector3(0, 0.4, 0));
+        if (next > targetTile) {
+            // No tile out there — leap forward into empty space, then fall.
+            const dir = tilePos(cur).clone().sub(tilePos(cur - jumpSize));
+            dir.y = 0; dir.normalize();
+            const phantom = standPos(cur).add(dir.clone().multiplyScalar(SP * ROW_GAP * 1.1)).add(new THREE.Vector3(0, 0.4, 0));
             enqueue(hopAction(phantom, HOP_H, HOP_DUR));
-            enqueue(fallAction(true));
+            enqueue(fallAction(dir.multiplyScalar(4)));
             overshoot = true;
             break;
         }
@@ -379,18 +387,18 @@ function runGuess(guess) {
 
     if (overshoot) {
         enqueue(finishAction(false,
-            `You jumped too many times! Tile ${TARGET} is the last one — there was nothing beyond it to land on. It takes ${correctJumps} jumps, since 80 ÷ ${jumpSize} = ${correctJumps}.`));
-    } else if (cur === TARGET) {
+            `You jumped too many times! Tile ${targetTile} is the last one — there was nothing beyond it to land on. It takes ${correctJumps} jumps, since ${span} ÷ ${jumpSize} = ${correctJumps}.`));
+    } else if (cur === targetTile) {
         enqueue(celebrateAction());
         enqueue(finishAction(true,
-            `Perfect! ${correctJumps} jumps × ${jumpSize} tiles = ${TARGET - 1}, landing right on tile ${TARGET}.`));
+            `Perfect! ${correctJumps} jumps × ${jumpSize} tiles = ${span}, landing right on tile ${targetTile}.`));
     } else {
         // landed short of the target → the tile gives way
         enqueue(waitAction(0.35));
         enqueue(crumbleAction(cur));
-        enqueue(fallAction(false));
+        enqueue(fallAction(null));
         enqueue(finishAction(false,
-            `So close — you stopped on tile ${cur}, short of ${TARGET}. You needed ${correctJumps} jumps (80 ÷ ${jumpSize} = ${correctJumps}), not ${guess}.`));
+            `So close — you stopped on tile ${cur}, short of ${targetTile}. You needed ${correctJumps} jumps (${span} ÷ ${jumpSize} = ${correctJumps}), not ${guess}.`));
     }
 }
 
@@ -422,22 +430,15 @@ dom.btnNext.addEventListener('click', () => {
 // ─── Idle camera before start ────────────────────────
 buildPath();
 boy.visible = false;
-camFollow.copy(tilePos(1).clone().add(new THREE.Vector3(0, TILE_TOP, 0)));
+camFollow.copy(standPos(1));
 snapCamera();
 
 // ─── Main loop ───────────────────────────────────────
+// Tiles are kept perfectly still so the boy always lands exactly on top of them.
 const clock = new THREE.Clock();
 function loop() {
     requestAnimationFrame(loop);
     const dt = Math.min(clock.getDelta(), 0.05);
-    const t = clock.elapsedTime;
-
-    // gentle bobbing of the floating tiles
-    for (const tile of tileMeshes) {
-        if (tile.material.opacity !== undefined && tile.material.transparent && tile.material.opacity < 1) continue;
-        tile.position.y = tile.userData.baseY + Math.sin(t * 1.2 + tile.userData.t0) * 0.08;
-        if (tile.userData.label) tile.userData.label.position.y = tile.userData.baseY + 0.95 + Math.sin(t * 1.2 + tile.userData.t0) * 0.08;
-    }
 
     // process the animation queue
     if (!action && queue.length) {
