@@ -191,33 +191,35 @@
 
     <a href="index.html" class="btn" id="nav-btn" style="text-decoration:none; z-index: 50; position: absolute; top: 20px; left: 20px;">🏠 Menu</a>
 
-    <div class="header">
-        <div style="font-size: 1.2rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 2px;">Set the mirror angle to hit the target!</div>
-        <div style="margin-top: 10px; font-size: 1.5rem; font-weight: bold; color: #fde047;">Score: <span id="score">0</span></div>
-    </div>
-
-    <div class="game-area">
-        <div class="laser-source"></div>
-        <div class="target" id="target">⭐</div>
-        
-        <div class="beam-in" id="beam-in"></div>
-        <div class="beam-out" id="beam-out"></div>
-
-        <div class="mirror-container">
-            <div class="mirror" id="mirror"></div>
+    <div id="scale-wrapper" style="transform-origin: top center; display: flex; flex-direction: column; align-items: center; width: 100%;">
+        <div class="header">
+            <div style="font-size: 1.2rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 2px;">Set the mirror angle to hit the target!</div>
+            <div style="margin-top: 10px; font-size: 1.5rem; font-weight: bold; color: #fde047;">Score: <span id="score">0</span></div>
         </div>
-    </div>
 
-    <div class="controls">
-        <button class="btn-angle" onclick="changeAngle(-15)">-15°</button>
-        <button class="btn-angle" onclick="changeAngle(-45)">-45°</button>
-        
-        <div class="angle-display"><span id="angle-val">0</span>°</div>
-        
-        <button class="btn-angle" onclick="changeAngle(45)">+45°</button>
-        <button class="btn-angle" onclick="changeAngle(15)">+15°</button>
+        <div class="game-area">
+            <div class="laser-source"></div>
+            <div class="target" id="target">⭐</div>
+            
+            <div class="beam-in" id="beam-in"></div>
+            <div class="beam-out" id="beam-out"></div>
 
-        <button class="btn-fire" id="btn-fire">FIRE LASER</button>
+            <div class="mirror-container">
+                <div class="mirror" id="mirror"></div>
+            </div>
+        </div>
+
+        <div class="controls" style="flex-wrap: wrap; justify-content: center; max-width: 800px;">
+            <button class="btn-angle" onclick="changeAngle(-15)">-15°</button>
+            <button class="btn-angle" onclick="changeAngle(-45)">-45°</button>
+            
+            <div class="angle-display"><span id="angle-val">0</span>°</div>
+            
+            <button class="btn-angle" onclick="changeAngle(45)">+45°</button>
+            <button class="btn-angle" onclick="changeAngle(15)">+15°</button>
+
+            <button class="btn-fire" id="btn-fire">FIRE LASER</button>
+        </div>
     </div>
 
     <!-- Announcement Modal -->
@@ -233,5 +235,16 @@
     </div>
 
     <script src="laser.js"></script>
+    <script>
+        function resizeApp() {
+            const ww = window.innerWidth;
+            const scale = Math.min(1, ww / 840);
+            const wrapper = document.getElementById('scale-wrapper');
+            wrapper.style.transform = `scale(${scale})`;
+            wrapper.style.marginBottom = `-${(1 - scale) * 750}px`;
+        }
+        window.addEventListener('resize', resizeApp);
+        resizeApp();
+    </script>
 </body>
 </html>
