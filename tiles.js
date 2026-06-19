@@ -200,10 +200,10 @@ const rnd = (min, max) => min + Math.floor(Math.random() * (max - min + 1));
 function startMode1() {
     mode = 1;
     clearRound();
-    tileW = 1; tileD = 1;
-    floorW = rnd(3, 6);
-    floorD = rnd(3, 6);
-    correctAnswer = floorW * floorD;
+    [tileW, tileD] = TILE_OPTIONS[Math.floor(Math.random() * TILE_OPTIONS.length)];
+    floorW = tileW * rnd(2, 4);
+    floorD = tileD * rnd(2, 4);
+    correctAnswer = (floorW / tileW) * (floorD / tileD);
     buildFloor();
     buildStack();
 
@@ -244,16 +244,16 @@ const dragPoint = new THREE.Vector3();
 // Build a pile of tiles next to the floor (columns of 8)
 function buildStack() {
     stackTiles.length = 0;
-    const count = floorW * floorD;
-    const baseX = floorW / 2 + 2.2;
+    const count = correctAnswer;
+    const baseX = floorW / 2 + tileW / 2 + 1.5;
     for (let i = 0; i < count; i++) {
         const col = Math.floor(i / 8);
         const lvl = i % 8;
-        const t = makeTile(1, 1, tileMat1);
+        const t = makeTile(tileW, tileD, tileMat1);
         t.position.set(
-            baseX + col * 1.3,
+            baseX + col * (tileW + 0.3),
             TILE_H / 2 + lvl * (TILE_H + 0.03),
-            floorD / 2 - 0.5
+            floorD / 2 - tileD / 2
         );
         t.userData.home = t.position.clone();
         roundGroup.add(t);
@@ -262,7 +262,7 @@ function buildStack() {
 
     // Label the tile size above the stack
     const lbl = makeTextSprite(`Tile ${tileW}×${tileD}`, '#c4b5fd');
-    lbl.position.set(baseX + (Math.ceil(count / 8) - 1) * 0.65, TILE_H / 2 + 8 * (TILE_H + 0.03) + 0.8, floorD / 2 - 0.5);
+    lbl.position.set(baseX + (Math.ceil(count / 8) - 1) * ((tileW + 0.3) / 2), TILE_H / 2 + 8 * (TILE_H + 0.03) + 0.8, floorD / 2 - tileD / 2);
     lbl.scale.set(3.2, 0.8, 1); // keep 4:1 canvas aspect so text isn't squashed
     roundGroup.add(lbl);
 }
