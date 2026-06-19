@@ -142,9 +142,18 @@ let targetTile = 81;        // randomized each round
 let busy = false;           // animating
 let started = false;
 
-// Boy position helper: feet on top of a tile
+// The boy launches from a START pad sitting one step BEFORE tile 1, so his
+// jumps (multiples of the jump number) land him exactly on N, 2N, 3N, …
+function startPadPos() {
+    return tilePos(1).clone().multiplyScalar(2).sub(tilePos(2));
+}
+// Centre position for a path index (0 = the START pad, otherwise tile i).
+function posForIndex(i) {
+    return i === 0 ? startPadPos() : tilePos(i);
+}
+// Boy position helper: feet resting on top of the START pad / a tile.
 function standPos(i) {
-    return tilePos(i).clone().add(new THREE.Vector3(0, FEET_OFFSET, 0));
+    return posForIndex(i).clone().add(new THREE.Vector3(0, FEET_OFFSET, 0));
 }
 
 // ─── Build the boy ───────────────────────────────────
@@ -189,10 +198,19 @@ function buildPath() {
     const targetMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.35, metalness: 0.3, emissive: 0x7c4a02, emissiveIntensity: 0.7 });
     const tileGeo = new THREE.BoxGeometry(2.0, 0.4, 2.0);
 
+    // START launch pad (index 0), one step before tile 1
+    const pad = new THREE.Mesh(tileGeo, startMat);
+    pad.position.copy(startPadPos());
+    pad.castShadow = true;
+    pad.receiveShadow = true;
+    pathGroup.add(pad);
+    const padLbl = makeTextSprite('START', '#a7f3d0');
+    padLbl.scale.set(2.0, 0.7, 1);
+    padLbl.position.copy(startPadPos()).add(new THREE.Vector3(0, 0.95, 0));
+    pathGroup.add(padLbl);
+
     for (let i = 1; i <= targetTile; i++) {
-        let mat = baseMat;
-        if (i === 1) mat = startMat;
-        else if (i === targetTile) mat = targetMat;
+        const mat = (i === targetTile) ? targetMat : baseMat;
         const t = new THREE.Mesh(tileGeo, mat.clone());
         t.position.copy(tilePos(i));
         t.castShadow = true;
@@ -202,7 +220,7 @@ function buildPath() {
         tileMeshes.push(t);
 
         // number label floating above each tile
-        const col = (i === 1) ? '#a7f3d0' : (i === targetTile) ? '#fde68a' : '#e2e8f0';
+        const col = (i === targetTile) ? '#fde68a' : '#e2e8f0';
         const lbl = makeTextSprite(`${i}`, col);
         lbl.scale.set(1.1, 1.1, 1);
         lbl.position.copy(tilePos(i)).add(new THREE.Vector3(0, 0.95, 0));
@@ -214,22 +232,23 @@ function buildPath() {
 
 // ─── Round setup ─────────────────────────────────────
 function newRound() {
-    // Random jump size and jump count → derive a target so the answer is always exact.
+    // The boy jumps in multiples of `jumpSize`, so the target is always a
+    // multiple of it: target = jumpSize × jumps.
     jumpSize = JUMP_CHOICES[Math.floor(Math.random() * JUMP_CHOICES.length)];
     correctJumps = JUMPS_MIN + Math.floor(Math.random() * (JUMPS_MAX - JUMPS_MIN + 1));
-    targetTile = 1 + jumpSize * correctJumps;
+    targetTile = jumpSize * correctJumps;
     buildPath();
 
     boy.visible = true;
     boy.rotation.set(0, 0, 0);
-    boy.position.copy(standPos(1));
-    boy.lookAt(tilePos(1 + jumpSize).x, boy.position.y, tilePos(1 + jumpSize).z);
+    boy.position.copy(standPos(0));   // on the START pad
+    boy.lookAt(tilePos(jumpSize).x, boy.position.y, tilePos(jumpSize).z);
 
     dom.sJump.textContent = jumpSize;
     dom.sTarget.textContent = targetTile;
     dom.apQuestion.innerHTML =
-        `The boy is on tile&nbsp;1 and lands <b>${jumpSize}</b> tiles further each jump. ` +
-        `How many jumps reach tile&nbsp;<span>${targetTile}</span> exactly?`;
+        `The boy jumps in multiples of <b>${jumpSize}</b> — landing on ${jumpSize}, ${jumpSize * 2}, ${jumpSize * 3}… ` +
+        `How many jumps land him exactly on tile&nbsp;<span>${targetTile}</span>?`;
     dom.answerInput.value = '';
 
     camFollow.copy(boy.position);
@@ -367,16 +386,14 @@ function runGuess(guess) {
     busy = true;
     dom.answerPanel.classList.add('hidden');
 
-    let cur = 1;
+    let cur = 0;   // 0 = START pad; landings are the multiples jumpSize, 2*jumpSize, …
     let overshoot = false;
-
-    const span = targetTile - 1;   // total tiles between start and target
 
     for (let k = 0; k < guess; k++) {
         const next = cur + jumpSize;
         if (next > targetTile) {
             // No tile out there — leap forward into empty space, then fall.
-            const dir = tilePos(cur).clone().sub(tilePos(cur - jumpSize));
+            const dir = posForIndex(cur).clone().sub(posForIndex(cur - jumpSize));
             dir.y = 0; dir.normalize();
             const phantom = standPos(cur).add(dir.clone().multiplyScalar(SP * ROW_GAP * 1.1)).add(new THREE.Vector3(0, 0.4, 0));
             enqueue(hopAction(phantom, HOP_H, HOP_DUR));
@@ -390,18 +407,18 @@ function runGuess(guess) {
 
     if (overshoot) {
         enqueue(finishAction(false,
-            `You jumped too many times! Tile ${targetTile} is the last one — there was nothing beyond it to land on. It takes ${correctJumps} jumps, since ${span} ÷ ${jumpSize} = ${correctJumps}.`));
+            `You jumped too many times! Tile ${targetTile} is the last one — there was nothing beyond it to land on. It takes ${correctJumps} jumps, since ${targetTile} ÷ ${jumpSize} = ${correctJumps}.`));
     } else if (cur === targetTile) {
         enqueue(celebrateAction());
         enqueue(finishAction(true,
-            `Perfect! ${correctJumps} jumps × ${jumpSize} tiles = ${span}, landing right on tile ${targetTile}.`));
+            `Perfect! ${correctJumps} jumps × ${jumpSize} = ${targetTile}, landing right on tile ${targetTile}.`));
     } else {
         // landed short of the target → the tile gives way
         enqueue(waitAction(0.35));
         enqueue(crumbleAction(cur));
         enqueue(fallAction(null));
         enqueue(finishAction(false,
-            `So close — you stopped on tile ${cur}, short of ${targetTile}. You needed ${correctJumps} jumps (${span} ÷ ${jumpSize} = ${correctJumps}), not ${guess}.`));
+            `So close — you stopped on tile ${cur}, short of ${targetTile}. You needed ${correctJumps} jumps (${targetTile} ÷ ${jumpSize} = ${correctJumps}), not ${guess}.`));
     }
 }
 
@@ -433,7 +450,7 @@ dom.btnNext.addEventListener('click', () => {
 // ─── Idle camera before start ────────────────────────
 buildPath();
 boy.visible = false;
-camFollow.copy(standPos(1));
+camFollow.copy(standPos(0));
 snapCamera();
 
 // ─── Main loop ───────────────────────────────────────
