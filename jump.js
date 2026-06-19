@@ -254,10 +254,13 @@ const enqueue = a => queue.push(a);
 
 // hop arc from current boy pos to a target stand pos
 function hopAction(toPos, height, dur) {
-    const from = boy.position.clone();
+    let from = null;
     return {
         dur,
         init() {
+            // Capture the start position when the hop BEGINS (not when it is queued),
+            // so each jump starts from the tile the boy is actually standing on.
+            from = boy.position.clone();
             // face travel direction
             const dir = new THREE.Vector3(toPos.x - from.x, 0, toPos.z - from.z);
             if (dir.lengthSq() > 1e-4) boy.lookAt(boy.position.x + dir.x, boy.position.y, boy.position.z + dir.z);
@@ -328,10 +331,10 @@ function fallAction(vel) {
 
 // happy victory bounce on the target tile
 function celebrateAction() {
-    const baseY = boy.position.y;
+    let baseY = 0;
     return {
         dur: 1.4,
-        init() {},
+        init() { baseY = boy.position.y; },
         update(p) {
             boy.position.y = baseY + Math.abs(Math.sin(p * Math.PI * 3)) * 0.6;
             boy.userData.aL.rotation.z = 0.35 + Math.sin(p * Math.PI * 6) * 0.8 + 0.6;
