@@ -311,11 +311,13 @@ window.addEventListener('pointerup', (e) => {
     let placed = false;
     const hit = raycaster.intersectObject(floorMesh)[0];
     if (hit) {
-        const cx = Math.floor(hit.point.x + floorW / 2);
-        const cz = Math.floor(hit.point.z + floorD / 2);
+        // Quantize based on tile dimensions
+        const cx = Math.floor((hit.point.x + floorW / 2) / tileW) * tileW;
+        const cz = Math.floor((hit.point.z + floorD / 2) / tileD) * tileD;
         const key = `${cx},${cz}`;
-        if (cx >= 0 && cx < floorW && cz >= 0 && cz < floorD && !placedTiles.has(key)) {
-            dragTile.position.copy(cellToWorld(cx, cz));
+        
+        if (cx >= 0 && cx + tileW <= floorW && cz >= 0 && cz + tileD <= floorD && !placedTiles.has(key)) {
+            dragTile.position.copy(cellToWorld(cx, cz, tileW, tileD));
             placedTiles.set(key, dragTile);
             placed = true;
         }
