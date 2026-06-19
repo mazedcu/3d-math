@@ -455,7 +455,7 @@ function animate(time) {
             return; // Skip other logic
         }
 
-        n.mesh.position.x -= 15 * dt; // Move towards left
+        n.mesh.position.x -= 8 * dt; // Move towards left (slower speed)
 
         // Check collision with bullets
         bullets.forEach(b => {

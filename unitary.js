@@ -125,7 +125,7 @@ function initRound() {
     speakOrder(dialogue);
 }
 
-function sellPotions() {
+function sellFruits() {
     const valUnitary = parseInt(inputUnitary.value);
     const valTotal = parseInt(inputTotal.value);
     
@@ -213,4 +213,4 @@ function showError(msg) {
     setTimeout(() => { errorMsg.style.opacity = 0; }, 3000);
 }
 
-btnSell.addEventListener('click', sellPotions);
+btnSell.addEventListener('click', sellFruits);
