@@ -1,15 +1,16 @@
 // =====================================================
 // Cosmic Jumper 3D — how many jumps to reach the target tile?
-// A boy hops along a zigzag path of tiles floating in space.
-// Each jump advances a fixed number of tiles. Guess the number
-// of jumps that lands him EXACTLY on the target tile — a wrong
-// answer sends him tumbling into the abyss.
+// A man hops along a straight line of tiles floating in space,
+// advancing a fixed number of tiles per jump. Too few jumps and
+// he's stuck (game over); too many and he leaps off the end into
+// the abyss; exactly right and he lands on the target tile.
 // =====================================================
 
 import * as THREE from 'three';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 // ─── DOM ─────────────────────────────────────────────
 const $ = id => document.getElementById(id);
@@ -31,21 +32,43 @@ const dom = {
 
 // ─── Three.js ────────────────────────────────────────
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x05060f);
-scene.fog = new THREE.FogExp2(0x05060f, 0.012);
+scene.fog = new THREE.FogExp2(0x05060f, 0.010);
 
-const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 800);
+const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 1200);
 
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.15;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
+// Image-based lighting for soft, realistic reflections on the tiles & character
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+// Deep-space nebula gradient as the backdrop
+scene.background = (function makeGradientBg() {
+    const c = document.createElement('canvas');
+    c.width = 16; c.height = 256;
+    const ctx = c.getContext('2d');
+    const g = ctx.createLinearGradient(0, 0, 0, 256);
+    g.addColorStop(0.0, '#1b1146');
+    g.addColorStop(0.35, '#130c33');
+    g.addColorStop(0.7, '#0a0820');
+    g.addColorStop(1.0, '#04030c');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, 16, 256);
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+})();
+
 const composer = new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene, camera));
-composer.addPass(new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.5, 0.6, 0.82));
+const bloom = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.75, 0.7, 0.8);
+composer.addPass(bloom);
 
 window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
@@ -55,36 +78,50 @@ window.addEventListener('resize', () => {
 });
 
 // ─── Lighting ────────────────────────────────────────
-scene.add(new THREE.AmbientLight(0x5566aa, 1.1));
-const sun = new THREE.DirectionalLight(0xffffff, 1.4);
-sun.position.set(6, 24, 12);
+scene.add(new THREE.HemisphereLight(0x9fb4ff, 0x251a4d, 0.7));
+const sun = new THREE.DirectionalLight(0xffffff, 2.0);
+sun.position.set(8, 26, 14);
 sun.castShadow = true;
 sun.shadow.mapSize.set(2048, 2048);
-sun.shadow.camera.near = 1; sun.shadow.camera.far = 120;
-sun.shadow.camera.left = -40; sun.shadow.camera.right = 40;
-sun.shadow.camera.top = 40; sun.shadow.camera.bottom = -40;
+sun.shadow.camera.near = 1; sun.shadow.camera.far = 140;
+sun.shadow.camera.left = -50; sun.shadow.camera.right = 50;
+sun.shadow.camera.top = 50; sun.shadow.camera.bottom = -50;
+sun.shadow.bias = -0.0004;
+sun.shadow.radius = 4;
 scene.add(sun);
-const rim = new THREE.PointLight(0x38bdf8, 1.2, 80);
-rim.position.set(-10, 8, 6);
-scene.add(rim);
+// Colored rim lights for a richer, more cinematic look
+const rimA = new THREE.PointLight(0x38bdf8, 2.2, 120, 1.6);
+rimA.position.set(-16, 10, 10);
+scene.add(rimA);
+const rimB = new THREE.PointLight(0xf472b6, 1.6, 120, 1.6);
+rimB.position.set(18, 6, -8);
+scene.add(rimB);
 
-// ─── Starfield ───────────────────────────────────────
-(function makeStars() {
-    const N = 1400;
-    const pos = new Float32Array(N * 3);
-    for (let i = 0; i < N; i++) {
-        const r = 80 + Math.random() * 320;
+// ─── Starfield (two layers: faint dust + brighter colored stars) ──
+function makeStarLayer(count, size, spread, opacity, tint) {
+    const pos = new Float32Array(count * 3);
+    const colArr = new Float32Array(count * 3);
+    const col = new THREE.Color();
+    for (let i = 0; i < count; i++) {
+        const r = 90 + Math.random() * spread;
         const th = Math.random() * Math.PI * 2;
         const ph = Math.acos(2 * Math.random() - 1);
         pos[i*3]   = r * Math.sin(ph) * Math.cos(th);
-        pos[i*3+1] = (Math.random() * 2 - 0.6) * 120;
-        pos[i*3+2] = r * Math.sin(ph) * Math.sin(th) - 60;
+        pos[i*3+1] = (Math.random() * 2 - 0.5) * 160;
+        pos[i*3+2] = r * Math.sin(ph) * Math.sin(th) - 40;
+        col.setHSL(tint + Math.random() * 0.12, 0.55, 0.55 + Math.random() * 0.45);
+        col.toArray(colArr, i * 3);
     }
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-    const m = new THREE.PointsMaterial({ color: 0xffffff, size: 1.1, sizeAttenuation: true, transparent: true, opacity: 0.9 });
-    scene.add(new THREE.Points(g, m));
-})();
+    g.setAttribute('color', new THREE.BufferAttribute(colArr, 3));
+    const m = new THREE.PointsMaterial({ size, sizeAttenuation: true, transparent: true, opacity, vertexColors: true, depthWrite: false });
+    const pts = new THREE.Points(g, m);
+    scene.add(pts);
+    return pts;
+}
+makeStarLayer(1600, 0.9, 360, 0.7, 0.58);   // faint blue dust
+makeStarLayer(280, 2.2, 320, 1.0, 0.05);    // brighter warm stars (glow via bloom)
 
 // ─── Text sprite helper (tile numbers) ───────────────
 function makeTextSprite(text, color = '#ffffff', bold = true) {
@@ -147,35 +184,49 @@ function standPos(i) {
     return posForIndex(i).clone().add(new THREE.Vector3(0, FEET_OFFSET, 0));
 }
 
-// ─── Build the boy ───────────────────────────────────
+// ─── Build the man ───────────────────────────────────
 const boy = new THREE.Group();
 (function buildBoy() {
-    const skin = new THREE.MeshStandardMaterial({ color: 0xf2c9a0, roughness: 0.6 });
-    const shirt = new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.5, emissive: 0x0a3a55, emissiveIntensity: 0.4 });
-    const pants = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.7 });
-    const hair = new THREE.MeshStandardMaterial({ color: 0x2b2b2b, roughness: 0.8 });
+    const skin  = new THREE.MeshStandardMaterial({ color: 0xf2c197, roughness: 0.55, metalness: 0.0, envMapIntensity: 0.8 });
+    const shirt = new THREE.MeshPhysicalMaterial({ color: 0x38bdf8, roughness: 0.35, metalness: 0.1, clearcoat: 0.6, clearcoatRoughness: 0.4, emissive: 0x0a3a55, emissiveIntensity: 0.35, envMapIntensity: 1.0 });
+    const pants = new THREE.MeshStandardMaterial({ color: 0x2b3650, roughness: 0.6, metalness: 0.1, envMapIntensity: 0.9 });
+    const shoes = new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.35, metalness: 0.2, envMapIntensity: 1.0 });
+    const hair  = new THREE.MeshStandardMaterial({ color: 0x241c16, roughness: 0.75 });
+    const eyeW  = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3 });
+    const eyeB  = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.2 });
 
-    // legs
-    const legGeo = new THREE.CapsuleGeometry(0.13, 0.4, 4, 8);
+    // legs + shoes
+    const legGeo = new THREE.CapsuleGeometry(0.13, 0.4, 6, 12);
     const lL = new THREE.Mesh(legGeo, pants); lL.position.set(-0.15, 0.3, 0);
     const lR = new THREE.Mesh(legGeo, pants); lR.position.set(0.15, 0.3, 0);
+    const shoeGeo = new THREE.SphereGeometry(0.16, 12, 10);
+    const sL = new THREE.Mesh(shoeGeo, shoes); sL.position.set(-0.15, 0.05, 0.06); sL.scale.set(1, 0.7, 1.4);
+    const sR = new THREE.Mesh(shoeGeo, shoes); sR.position.set(0.15, 0.05, 0.06); sR.scale.set(1, 0.7, 1.4);
     // body
-    const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.26, 0.45, 4, 10), shirt);
+    const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.26, 0.45, 6, 16), shirt);
     body.position.y = 0.85;
     // arms
-    const armGeo = new THREE.CapsuleGeometry(0.1, 0.42, 4, 8);
+    const armGeo = new THREE.CapsuleGeometry(0.1, 0.42, 6, 12);
     const aL = new THREE.Mesh(armGeo, shirt); aL.position.set(-0.36, 0.92, 0); aL.rotation.z = 0.35;
     const aR = new THREE.Mesh(armGeo, shirt); aR.position.set(0.36, 0.92, 0); aR.rotation.z = -0.35;
     // head
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.28, 20, 20), skin);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.28, 28, 28), skin);
     head.position.y = 1.42;
-    const hairMesh = new THREE.Mesh(new THREE.SphereGeometry(0.3, 20, 20, 0, Math.PI * 2, 0, Math.PI * 0.62), hair);
+    const hairMesh = new THREE.Mesh(new THREE.SphereGeometry(0.3, 28, 28, 0, Math.PI * 2, 0, Math.PI * 0.62), hair);
     hairMesh.position.y = 1.46;
+    // face (eyes look toward +Z, the man's forward/travel direction)
+    const face = new THREE.Group();
+    for (const sx of [-0.1, 0.1]) {
+        const w = new THREE.Mesh(new THREE.SphereGeometry(0.055, 12, 12), eyeW);
+        w.position.set(sx, 1.45, 0.24); w.scale.set(1, 1.2, 0.6);
+        const b = new THREE.Mesh(new THREE.SphereGeometry(0.028, 10, 10), eyeB);
+        b.position.set(sx, 1.45, 0.28);
+        face.add(w, b);
+    }
 
-    boy.add(lL, lR, body, aL, aR, head, hairMesh);
+    boy.add(lL, lR, sL, sR, body, aL, aR, head, hairMesh, face);
     boy.traverse(o => { if (o.isMesh) { o.castShadow = true; o.userData.base = o.position.clone(); } });
     boy.userData = { lL, lR, aL, aR, body };
-    boy.scale.setScalar(1.0);
 })();
 scene.add(boy);
 
@@ -184,9 +235,9 @@ function buildPath() {
     while (pathGroup.children.length) pathGroup.remove(pathGroup.children.pop());
     tileMeshes.length = 0;
 
-    const baseMat = new THREE.MeshStandardMaterial({ color: 0x6d4ed6, roughness: 0.45, metalness: 0.2, emissive: 0x2a1c5c, emissiveIntensity: 0.5 });
-    const startMat = new THREE.MeshStandardMaterial({ color: 0x10b981, roughness: 0.4, metalness: 0.2, emissive: 0x065f46, emissiveIntensity: 0.6 });
-    const targetMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.35, metalness: 0.3, emissive: 0x7c4a02, emissiveIntensity: 0.7 });
+    const baseMat = new THREE.MeshPhysicalMaterial({ color: 0x6d4ed6, roughness: 0.3, metalness: 0.35, clearcoat: 0.7, clearcoatRoughness: 0.25, emissive: 0x2a1c5c, emissiveIntensity: 0.55, envMapIntensity: 1.1 });
+    const startMat = new THREE.MeshPhysicalMaterial({ color: 0x10b981, roughness: 0.28, metalness: 0.35, clearcoat: 0.7, clearcoatRoughness: 0.25, emissive: 0x065f46, emissiveIntensity: 0.7, envMapIntensity: 1.1 });
+    const targetMat = new THREE.MeshPhysicalMaterial({ color: 0xf59e0b, roughness: 0.22, metalness: 0.4, clearcoat: 0.8, clearcoatRoughness: 0.2, emissive: 0xb4720a, emissiveIntensity: 1.1, envMapIntensity: 1.2 });
     const tileGeo = new THREE.BoxGeometry(2.0, 0.4, 2.0);
 
     // START launch pad (index 0), one step before tile 1
@@ -318,6 +369,26 @@ function stuckAction() {
     };
 }
 
+// the man leaps past the final tile and tumbles into the abyss
+function fallAction(vel) {
+    const vx = vel ? vel.x : 0;
+    const vz = vel ? vel.z : 0;
+    let vy = 5;
+    return {
+        dur: 2.4,
+        init() {},
+        update(p, dt) {
+            vy -= 24 * dt;
+            boy.position.x += vx * dt;
+            boy.position.y += vy * dt;
+            boy.position.z += vz * dt;
+            boy.rotation.x += dt * 7;
+            boy.rotation.z += dt * 4;
+        },
+        done() { boy.visible = false; }
+    };
+}
+
 // happy victory bounce on the target tile
 function celebrateAction() {
     let baseY = 0;
@@ -335,12 +406,12 @@ function celebrateAction() {
 }
 
 // fired once the whole sequence finishes
-function finishAction(win, desc) {
+function finishAction(win, desc, title) {
     return {
         dur: 0.01,
         init() {
             busy = false;
-            dom.resTitle.textContent = win ? 'YOU MADE IT! 🌟' : 'GAME OVER';
+            dom.resTitle.textContent = title || (win ? 'YOU MADE IT! 🌟' : 'GAME OVER');
             dom.resTitle.className = 'res-title ' + (win ? 'win' : 'fail');
             dom.resDesc.textContent = desc;
             dom.result.classList.add('show');
@@ -357,24 +428,33 @@ function runGuess(guess) {
     dom.answerPanel.classList.add('hidden');
 
     let cur = 0;   // 0 = START pad; landings are the multiples jumpSize, 2*jumpSize, …
-    let blocked = false;   // a jump would go past the last tile (the line ends at the target)
+    let overshoot = false;   // a jump goes past the final tile → leap into empty space & fall
 
     for (let k = 0; k < guess; k++) {
         const next = cur + jumpSize;
-        if (next > targetTile) { blocked = true; break; }   // can't jump beyond the line
+        if (next > targetTile) {
+            // There's no tile out here — the man leaps forward off the end and falls.
+            const dir = posForIndex(cur).clone().sub(posForIndex(cur - jumpSize));
+            dir.y = 0; dir.normalize();
+            const phantom = standPos(cur).add(dir.clone().multiplyScalar(SP * jumpSize * 0.5)).add(new THREE.Vector3(0, 0.5, 0));
+            enqueue(hopAction(phantom, HOP_H * 1.3, HOP_DUR));
+            enqueue(fallAction(dir.multiplyScalar(5)));
+            overshoot = true;
+            break;
+        }
         enqueue(hopAction(standPos(next), HOP_H, HOP_DUR));
         cur = next;
     }
 
-    if (cur === targetTile && guess === correctJumps) {
+    if (!overshoot && cur === targetTile && guess === correctJumps) {
         enqueue(celebrateAction());
         enqueue(finishAction(true,
             `Perfect! ${correctJumps} jumps × ${jumpSize} = ${targetTile}, landing right on tile ${targetTile}.`));
-    } else if (blocked) {
-        // too many jumps: he reached the target but couldn't take the extra jumps
-        enqueue(stuckAction());
+    } else if (overshoot) {
+        // too many jumps: he leaps past the last tile into the abyss
         enqueue(finishAction(false,
-            `Too many jumps! It only takes ${correctJumps} (${targetTile} ÷ ${jumpSize} = ${correctJumps}), not ${guess}. He has to stop on tile ${cur} — game over.`));
+            `Too many jumps! He leapt past tile ${targetTile} into the abyss. It only takes ${correctJumps} jumps (${targetTile} ÷ ${jumpSize} = ${correctJumps}), not ${guess}.`,
+            'INTO THE ABYSS! 💀'));
     } else {
         // too few jumps: he stays put on the tile he reached, short of the target
         enqueue(stuckAction());
