@@ -108,19 +108,18 @@ function makeTextSprite(text, color = '#ffffff', bold = true) {
 }
 
 // ─── Game constants ──────────────────────────────────
-const SP = 2.6;             // gap between tiles along the line (depth)
-const RISE = 0.42;          // how much each tile rises, climbing into space
-// Boy's feet rest exactly on the top face of a tile.
-// Tile box is 0.4 tall (top = centre + 0.2); the boy's feet sit ~0.03 below his origin.
+const SP = 2.4;             // gap between tiles along the line (left → right)
+// Man's feet rest exactly on the top face of a tile.
+// Tile box is 0.4 tall (top = centre + 0.2); the man's feet sit ~0.03 below his origin.
 const FEET_OFFSET = 0.23;
-// The boy jumps in multiples of jumpSize; target = jumpSize * jumps (always a multiple).
+// The man jumps in steps of jumpSize tiles; target = jumpSize * jumps (always a multiple).
 const JUMP_CHOICES = [2, 3, 4, 5, 6, 7, 8];
 const JUMPS_MIN = 4, JUMPS_MAX = 11;
 
 // Tile index (1-based) → world position of its centre.
-// Tiles form a single straight line receding and climbing gently into space.
+// Tiles form a single straight horizontal line running left → right.
 function tilePos(i) {
-    return new THREE.Vector3(0, i * RISE, -i * SP);
+    return new THREE.Vector3(i * SP, 0, 0);
 }
 
 // ─── State ───────────────────────────────────────────
@@ -239,8 +238,8 @@ function newRound() {
     dom.sJump.textContent = jumpSize;
     dom.sTarget.textContent = targetTile;
     dom.apQuestion.innerHTML =
-        `The boy jumps in multiples of <b>${jumpSize}</b> — landing on ${jumpSize}, ${jumpSize * 2}, ${jumpSize * 3}… ` +
-        `How many jumps land him exactly on tile&nbsp;<span>${targetTile}</span>?`;
+        `The man can jump <b>${jumpSize}</b> tiles in each jump. ` +
+        `How many jumps are required to reach tile&nbsp;<span>${targetTile}</span>?`;
     dom.answerInput.value = '';
 
     camFollow.copy(boy.position);
@@ -249,7 +248,7 @@ function newRound() {
 
 // ─── Camera follow ───────────────────────────────────
 const camFollow = new THREE.Vector3();
-const camOffset = new THREE.Vector3(0, 6.5, 11);
+const camOffset = new THREE.Vector3(0, 3.4, 12);   // in front & slightly above, line runs left→right
 function desiredCamPos() {
     return camFollow.clone().add(camOffset);
 }
