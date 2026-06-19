@@ -157,7 +157,7 @@ function startRound() {
 }
 
 dom.btnStart.addEventListener('click', () => {
-    dom.startScreen.classList.add('hidden');
+    dom.startScreen.classList.remove('visible');
     score = 0;
     lives = 3;
     dom.score.textContent = score;
