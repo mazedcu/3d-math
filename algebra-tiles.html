@@ -401,6 +401,17 @@
         }
         #wrong-flash.show { opacity: 1; }
 
+        @keyframes slow-vanish {
+            0%   { transform: scale(1); opacity: 1; filter: brightness(1); }
+            40%  { transform: scale(1.15); opacity: 0.9; filter: brightness(1.5); box-shadow: 0 0 20px rgba(255,255,255,0.8); }
+            100% { transform: scale(0); opacity: 0; filter: brightness(2); }
+        }
+        .animating-vanish {
+            animation: slow-vanish 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            pointer-events: none;
+            z-index: 10;
+        }
+
         @media (max-width: 600px) {
             #problem-eq { font-size: 1.8rem; }
             .tray-x .tray-tile-body, .tray-nx .tray-tile-body { width: 40px; height: 80px; }

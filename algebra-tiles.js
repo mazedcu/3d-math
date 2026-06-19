@@ -46,12 +46,50 @@ function loadEquation() {
 
     document.getElementById('problem-eq').textContent = currentEq.eq;
     document.getElementById('answer-input').value = '';
+    document.getElementById('answer-input').value = '';
     resetWorkspace();
+}
+
+// ---------- Dynamic Equation Display ----------
+function formatExpression(xNet, unitNet) {
+    let parts = [];
+    if (xNet !== 0) {
+        if (xNet === 1) parts.push('x');
+        else if (xNet === -1) parts.push('−x');
+        else parts.push(xNet + 'x');
+    }
+    
+    if (unitNet !== 0) {
+        if (unitNet > 0) {
+            if (parts.length > 0) parts.push('+ ' + unitNet);
+            else parts.push(unitNet.toString());
+        } else {
+            if (parts.length > 0) parts.push('− ' + Math.abs(unitNet));
+            else parts.push('−' + Math.abs(unitNet));
+        }
+    }
+    
+    if (parts.length === 0) return '0';
+    return parts.join(' ');
+}
+
+function updateEquationDisplay() {
+    const lX = leftTiles.filter(t => t === 'x').length - leftTiles.filter(t => t === '-x').length;
+    const lU = leftTiles.filter(t => t === '1').length - leftTiles.filter(t => t === '-1').length;
+    const rX = rightTiles.filter(t => t === 'x').length - rightTiles.filter(t => t === '-x').length;
+    const rU = rightTiles.filter(t => t === '1').length - rightTiles.filter(t => t === '-1').length;
+    
+    const lStr = formatExpression(lX, lU);
+    const rStr = formatExpression(rX, rU);
+    
+    document.getElementById('problem-eq').textContent = `${lStr} = ${rStr}`;
 }
 
 // ---------- Reset Workspace ----------
 function resetWorkspace() {
     clearFeedback();
+    [...document.querySelectorAll('.animating-vanish')].forEach(el => el.remove());
+    
     leftTiles = Array(currentEq.xCoeff).fill(currentEq.xCoeff > 0 ? 'x' : '-x');
     if (currentEq.constant > 0) {
         leftTiles.push(...Array(currentEq.constant).fill('1'));
@@ -69,6 +107,7 @@ function resetWorkspace() {
     renderLeftPanel();
     renderRightPanel();
     updateStepBar();
+    updateEquationDisplay();
 }
 
 // ---------- Setup Tray Drag (pointer events) ----------
@@ -172,6 +211,8 @@ function setupDropZone() {
 // ---------- Place Tile & Cancellation ----------
 function placeTile(side, type) {
     const arr = side === 'left' ? leftTiles : rightTiles;
+    const panelId = side + '-panel';
+    const panel = document.getElementById(panelId);
     
     // Zero-pair cancellation logic
     const opp = type === '1' ? '-1' : type === '-1' ? '1' : type === 'x' ? '-x' : 'x';
@@ -180,17 +221,46 @@ function placeTile(side, type) {
     if (oppIdx !== -1) {
         // Cancel out!
         arr.splice(oppIdx, 1);
-        playTone(600, 'sine', 0.1, 0.05); // slightly different sound for cancel
-    } else {
-        arr.push(type);
-        playTone(400, 'sine', 0.08, 0.06);
+        
+        // Find DOM element (ignoring currently animating ones)
+        const activeTiles = [...panel.querySelectorAll('.placed-tile:not(.animating-vanish)')];
+        const targetDOM = activeTiles[oppIdx];
+        
+        if (targetDOM) {
+            targetDOM.classList.add('animating-vanish');
+            
+            // Create a temporary tile for the dropped one to also vanish
+            const dropTile = document.createElement('div');
+            const cls = type === 'x' ? 'tile-x' : type === '-x' ? 'tile-nx' : type === '1' ? 'tile-1' : 'tile-n1';
+            dropTile.className = `placed-tile ${cls} animating-vanish`;
+            dropTile.textContent = type === 'x' ? 'x' : type === '-x' ? '−x' : type === '1' ? '1' : '−1';
+            panel.appendChild(dropTile);
+            
+            playTone(600, 'sine', 0.1, 0.05);
+            
+            // Wait for animation to finish before removing from DOM
+            setTimeout(() => {
+                if (targetDOM.parentNode) targetDOM.remove();
+                if (dropTile.parentNode) dropTile.remove();
+                updateEquationDisplay();
+                updateStepBar();
+            }, 1200);
+            
+            clearFeedback();
+            return; // Exit early! Skip renderPanel so we don't recreate elements immediately
+        }
     }
+
+    // Normal add
+    arr.push(type);
+    playTone(400, 'sine', 0.08, 0.06);
 
     if (side === 'left') renderLeftPanel();
     else renderRightPanel();
 
     clearFeedback();
     updateStepBar();
+    updateEquationDisplay();
 }
 
 function renderLeftPanel() {
@@ -203,7 +273,7 @@ function renderRightPanel() {
 
 function renderPanel(panelId, arr) {
     const panel = document.getElementById(panelId);
-    [...panel.querySelectorAll('.placed-tile')].forEach(t => t.remove());
+    [...panel.querySelectorAll('.placed-tile:not(.animating-vanish)')].forEach(t => t.remove());
 
     arr.forEach((type, idx) => {
         const tile = document.createElement('div');
