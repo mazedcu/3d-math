@@ -108,27 +108,19 @@ function makeTextSprite(text, color = '#ffffff', bold = true) {
 }
 
 // ─── Game constants ──────────────────────────────────
-const COLS = 9;             // tiles per zigzag row
-const SP = 2.6;             // tile spacing
-const ROW_GAP = 1.45;       // depth multiplier between rows
-const RISE = 0.55;          // how much each row rises into space
+const SP = 2.6;             // gap between tiles along the line (depth)
+const RISE = 0.42;          // how much each tile rises, climbing into space
 // Boy's feet rest exactly on the top face of a tile.
 // Tile box is 0.4 tall (top = centre + 0.2); the boy's feet sit ~0.03 below his origin.
 const FEET_OFFSET = 0.23;
-// A round is built so an exact answer always exists: target = 1 + jumpSize * jumps.
+// The boy jumps in multiples of jumpSize; target = jumpSize * jumps (always a multiple).
 const JUMP_CHOICES = [2, 3, 4, 5, 6, 7, 8];
 const JUMPS_MIN = 4, JUMPS_MAX = 11;
 
-// Tile index (1-based) → world position of its centre
+// Tile index (1-based) → world position of its centre.
+// Tiles form a single straight line receding and climbing gently into space.
 function tilePos(i) {
-    const idx = i - 1;
-    const row = Math.floor(idx / COLS);
-    let col = idx % COLS;
-    if (row % 2 === 1) col = COLS - 1 - col;   // zigzag (boustrophedon)
-    const x = (col - (COLS - 1) / 2) * SP;
-    const z = -row * SP * ROW_GAP;
-    const y = row * RISE;
-    return new THREE.Vector3(x, y, z);
+    return new THREE.Vector3(0, i * RISE, -i * SP);
 }
 
 // ─── State ───────────────────────────────────────────
@@ -188,7 +180,7 @@ const boy = new THREE.Group();
 })();
 scene.add(boy);
 
-// ─── Build the zigzag path of tiles ──────────────────
+// ─── Build the straight line of tiles ────────────────
 function buildPath() {
     while (pathGroup.children.length) pathGroup.remove(pathGroup.children.pop());
     tileMeshes.length = 0;
@@ -308,43 +300,22 @@ function waitAction(dur) {
     return { dur, init() {}, update() {}, done() {} };
 }
 
-// the tile under the boy crumbles, then he plummets
-function crumbleAction(tileIdx) {
-    const tile = tileMeshes[tileIdx - 1];
+// The boy can't reach the target — he stays on his tile, looks toward the
+// far-off target and gives a disappointed slump. No falling.
+function stuckAction() {
+    let baseY = 0;
     return {
-        dur: 0.7,
-        init() {},
+        dur: 1.1,
+        init() { baseY = boy.position.y; },
         update(p) {
-            if (tile) {
-                tile.position.y = tile.userData.baseY - p * 1.2;
-                tile.rotation.z = p * 0.5;
-                tile.material.opacity = 1 - p;
-                tile.material.transparent = true;
-                if (tile.userData.label) tile.userData.label.material.opacity = 1 - p;
-            }
-            boy.position.y -= p * 0.15;
+            // small teeter then a shrug/slump
+            const t = Math.sin(p * Math.PI);
+            boy.rotation.z = Math.sin(p * Math.PI * 4) * 0.12 * (1 - p);
+            boy.userData.aL.rotation.z = 0.35 + t * 0.5;
+            boy.userData.aR.rotation.z = -0.35 - t * 0.5;
+            boy.position.y = baseY - t * 0.08;   // little slump, stays on tile
         },
-        done() {}
-    };
-}
-
-// free fall into the abyss (tumbling). `vel` is an optional horizontal launch velocity.
-function fallAction(vel) {
-    const vx = vel ? vel.x : 0;
-    const vz = vel ? vel.z : 0;
-    let vy = vel ? 4 : 0;
-    return {
-        dur: 2.2,
-        init() {},
-        update(p, dt) {
-            vy -= 22 * dt;
-            boy.position.y += vy * dt;
-            boy.position.x += vx * dt;
-            boy.position.z += vz * dt;
-            boy.rotation.x += dt * 6;
-            boy.rotation.z += dt * 3;
-        },
-        done() { boy.visible = false; }
+        done() { boy.rotation.z = 0; boy.position.y = baseY; }
     };
 }
 
@@ -370,7 +341,7 @@ function finishAction(win, desc) {
         dur: 0.01,
         init() {
             busy = false;
-            dom.resTitle.textContent = win ? 'YOU MADE IT! 🌟' : 'INTO THE ABYSS! 💀';
+            dom.resTitle.textContent = win ? 'YOU MADE IT! 🌟' : 'GAME OVER';
             dom.resTitle.className = 'res-title ' + (win ? 'win' : 'fail');
             dom.resDesc.textContent = desc;
             dom.result.classList.add('show');
@@ -387,38 +358,29 @@ function runGuess(guess) {
     dom.answerPanel.classList.add('hidden');
 
     let cur = 0;   // 0 = START pad; landings are the multiples jumpSize, 2*jumpSize, …
-    let overshoot = false;
+    let blocked = false;   // a jump would go past the last tile (the line ends at the target)
 
     for (let k = 0; k < guess; k++) {
         const next = cur + jumpSize;
-        if (next > targetTile) {
-            // No tile out there — leap forward into empty space, then fall.
-            const dir = posForIndex(cur).clone().sub(posForIndex(cur - jumpSize));
-            dir.y = 0; dir.normalize();
-            const phantom = standPos(cur).add(dir.clone().multiplyScalar(SP * ROW_GAP * 1.1)).add(new THREE.Vector3(0, 0.4, 0));
-            enqueue(hopAction(phantom, HOP_H, HOP_DUR));
-            enqueue(fallAction(dir.multiplyScalar(4)));
-            overshoot = true;
-            break;
-        }
+        if (next > targetTile) { blocked = true; break; }   // can't jump beyond the line
         enqueue(hopAction(standPos(next), HOP_H, HOP_DUR));
         cur = next;
     }
 
-    if (overshoot) {
-        enqueue(finishAction(false,
-            `You jumped too many times! Tile ${targetTile} is the last one — there was nothing beyond it to land on. It takes ${correctJumps} jumps, since ${targetTile} ÷ ${jumpSize} = ${correctJumps}.`));
-    } else if (cur === targetTile) {
+    if (cur === targetTile && guess === correctJumps) {
         enqueue(celebrateAction());
         enqueue(finishAction(true,
             `Perfect! ${correctJumps} jumps × ${jumpSize} = ${targetTile}, landing right on tile ${targetTile}.`));
-    } else {
-        // landed short of the target → the tile gives way
-        enqueue(waitAction(0.35));
-        enqueue(crumbleAction(cur));
-        enqueue(fallAction(null));
+    } else if (blocked) {
+        // too many jumps: he reached the target but couldn't take the extra jumps
+        enqueue(stuckAction());
         enqueue(finishAction(false,
-            `So close — you stopped on tile ${cur}, short of ${targetTile}. You needed ${correctJumps} jumps (${targetTile} ÷ ${jumpSize} = ${correctJumps}), not ${guess}.`));
+            `Too many jumps! It only takes ${correctJumps} (${targetTile} ÷ ${jumpSize} = ${correctJumps}), not ${guess}. He has to stop on tile ${cur} — game over.`));
+    } else {
+        // too few jumps: he stays put on the tile he reached, short of the target
+        enqueue(stuckAction());
+        enqueue(finishAction(false,
+            `Not enough jumps — he's stuck on tile ${cur}, short of ${targetTile}. It takes ${correctJumps} jumps (${targetTile} ÷ ${jumpSize} = ${correctJumps}), not ${guess}. Game over.`));
     }
 }
 
