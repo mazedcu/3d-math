@@ -21,16 +21,16 @@
         /* Start screen (bottom-left) */
         #start-screen {
             position: fixed; bottom: 28px; left: 24px; z-index: 300;
-            display: flex; flex-direction: column; gap: 10px;
+            display: flex; flex-direction: column; gap: 12px;
             background: var(--surface); backdrop-filter: blur(16px);
             border: 1px solid var(--border); border-radius: 18px;
-            padding: 16px 20px; max-width: 320px;
+            padding: 20px 24px; max-width: 380px;
             box-shadow: 0 4px 24px rgba(0,0,0,0.4);
             transition: opacity 0.4s, transform 0.4s;
         }
         #start-screen.hidden { opacity: 0; transform: translateY(20px); pointer-events: none; }
-        .start-title { font-size: 1rem; font-weight: 800; color: var(--text); }
-        .start-desc { font-size: 0.75rem; color: var(--dim); line-height: 1.5; }
+        .start-title { font-size: 1.15rem; font-weight: 800; color: var(--text); }
+        .start-desc { font-size: 0.9rem; color: var(--dim); line-height: 1.55; }
 
         /* Answer panel (bottom center) */
         #answer-panel {
@@ -93,7 +93,7 @@
     <!-- Start screen -->
     <div id="start-screen">
         <div class="start-title">🚀 Leap Across the Stars!</div>
-        <div class="start-desc">The man jumps a fixed number of tiles each jump along a line. Work out how many jumps are required to reach the target tile. Guess wrong and he gets stuck — game over!</div>
+        <div class="start-desc">The man jumps the same distance every hop. Count how many hops reach the target tile. Too few and he stops short. Too many and he falls into space!</div>
         <button class="btn primary" id="btn-start">Start</button>
     </div>
 
@@ -119,6 +119,6 @@
         }
     }
     </script>
-    <script type="module" src="jump.js?v=7"></script>
+    <script type="module" src="jump.js?v=8"></script>
 </body>
 </html>
