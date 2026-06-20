@@ -17,32 +17,37 @@
         }
         .target-box {
             position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
+            top: 16px;
+            right: 24px;
             z-index: 30;
             background: rgba(26, 26, 46, 0.85);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border: 2px solid #3b82f6;
-            border-radius: 20px;
-            padding: 16px 36px;
+            border: 1.5px solid #3b82f6;
+            border-radius: 12px;
+            padding: 8px 16px;
             text-align: center;
-            box-shadow: 0 8px 32px rgba(59, 130, 246, 0.3);
+            box-shadow: 0 4px 16px rgba(59, 130, 246, 0.25);
         }
         .target-label {
-            font-size: 1rem;
-            color: rgba(255,255,255,0.7);
-            letter-spacing: 2px;
+            font-size: 0.6rem;
+            color: rgba(255,255,255,0.65);
+            letter-spacing: 1px;
             text-transform: uppercase;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
         }
         .target-value {
-            font-size: 2.5rem;
+            font-size: 1.3rem;
             font-weight: 800;
             color: #60a5fa;
             font-family: 'JetBrains Mono', monospace;
+            line-height: 1.1;
         }
+        /* Smaller upper HUD for this page */
+        .hud .title { font-size: 1.15rem; padding: 6px 14px; letter-spacing: 1px; }
+        .hud .stat-val { font-size: 1.1rem; }
+        .hud .stat-lbl { font-size: 0.55rem; letter-spacing: 1px; }
+        .hud .health-bar { width: 100px; height: 8px; margin-top: 2px; }
         .health-bar {
             width: 150px;
             height: 12px;
@@ -78,7 +83,7 @@
         </div>
         <div class="hud-right" style="display:flex; align-items:center;">
             <h1 class="title"><span class="t1" style="color: #60a5fa;">BIPLANE</span><span class="t2" style="color: #93c5fd;">MULTIPLES</span></h1>
-            <div style="color: #facc15; font-weight: 800; font-size: 1.2rem; margin-left: 20px; letter-spacing: 1px;">SHOOT THE MULTIPLES!</div>
+            <div style="color: #facc15; font-weight: 800; font-size: 0.85rem; margin-left: 12px; letter-spacing: 0.5px;">SHOOT THE MULTIPLES!</div>
             <a href="index.html" class="btn" style="text-decoration:none; margin-left: 10px; display:flex; align-items:center;">🏠 Menu</a>
         </div>
     </div>
@@ -89,7 +94,7 @@
         }
     </script>
 
-    <!-- Bottom Target -->
+    <!-- Top-right Target -->
     <div class="target-box">
         <div class="target-label">Target Multiples Of</div>
         <div class="target-value" id="target-number">?</div>
