@@ -67,9 +67,9 @@
 <body>
     <canvas id="c"></canvas>
 
-    <!-- Top HUD (all right-aligned) -->
-    <div id="hud" class="hud" style="justify-content: flex-end;">
-        <div class="hud-right" style="display:flex; align-items:center; gap:10px;">
+    <!-- Top HUD (score left, menu right) -->
+    <div id="hud" class="hud">
+        <div class="hud-left">
             <div class="stat accent" style="--accent-color: #3b82f6;">
                 <div class="stat-val" id="s-score">0</div>
                 <div class="stat-lbl">Score</div>
@@ -80,6 +80,8 @@
                 </div>
                 <div class="stat-lbl">Health</div>
             </div>
+        </div>
+        <div class="hud-right" style="display:flex; align-items:center; gap:10px;">
             <a href="index.html" class="btn" style="text-decoration:none; display:flex; align-items:center;">🏠 Menu</a>
         </div>
     </div>
