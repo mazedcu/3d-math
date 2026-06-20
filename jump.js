@@ -125,22 +125,29 @@ makeStarLayer(280, 2.2, 320, 1.0, 0.05);    // brighter warm stars (glow via blo
 
 // ─── Text sprite helper (tile numbers) ───────────────
 function makeTextSprite(text, color = '#ffffff', bold = true) {
+    const measure = document.createElement('canvas').getContext('2d');
+    const fontSize = 150;
+    measure.font = `${bold ? 900 : 600} ${fontSize}px "Outfit", Arial, sans-serif`;
+    const pad = 30;
+    const w = Math.max(256, Math.ceil(measure.measureText(text).width) + pad * 2);
+    const h = 256;
     const c = document.createElement('canvas');
-    c.width = 256; c.height = 256;
+    c.width = w; c.height = h;
     const ctx = c.getContext('2d');
-    ctx.font = `${bold ? 900 : 600} 150px "Outfit", Arial, sans-serif`;
+    ctx.font = `${bold ? 900 : 600} ${fontSize}px "Outfit", Arial, sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.lineJoin = 'round';
     ctx.lineWidth = 18;
     ctx.strokeStyle = 'rgba(0,0,0,0.85)';
-    ctx.strokeText(text, 128, 138);
+    ctx.strokeText(text, w / 2, h / 2 + 10);
     ctx.fillStyle = color;
-    ctx.fillText(text, 128, 138);
+    ctx.fillText(text, w / 2, h / 2 + 10);
     const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
         map: new THREE.CanvasTexture(c), transparent: true, depthTest: false
     }));
     sprite.renderOrder = 5;
+    sprite.userData.aspect = w / h;
     return sprite;
 }
 
@@ -247,7 +254,7 @@ function buildPath() {
     pad.receiveShadow = true;
     pathGroup.add(pad);
     const padLbl = makeTextSprite('START', '#a7f3d0');
-    padLbl.scale.set(2.0, 0.7, 1);
+    padLbl.scale.set(0.85 * padLbl.userData.aspect, 0.85, 1);
     padLbl.position.copy(startPadPos()).add(new THREE.Vector3(0, 0.95, 0));
     pathGroup.add(padLbl);
 
@@ -264,7 +271,7 @@ function buildPath() {
         // number label floating above each tile
         const col = (i === targetTile) ? '#fde68a' : '#e2e8f0';
         const lbl = makeTextSprite(`${i}`, col);
-        lbl.scale.set(1.1, 1.1, 1);
+        lbl.scale.set(1.1 * lbl.userData.aspect, 1.1, 1);
         lbl.position.copy(tilePos(i)).add(new THREE.Vector3(0, 0.95, 0));
         lbl.userData = { tile: t };
         pathGroup.add(lbl);
