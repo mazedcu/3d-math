@@ -13,6 +13,7 @@ let currentAnswer = 0;
 let isPlaying = false;
 let pcTimer = null;
 let lastTime = 0;
+let score = 0;
 
 // UI Elements
 const uiOverlay = document.getElementById('start-overlay');
@@ -267,6 +268,9 @@ function endGame(playerWon) {
     uiSubmit.disabled = true;
 
     if (playerWon) {
+        score++;
+        const scoreVal = document.getElementById('score-val');
+        if (scoreVal) scoreVal.textContent = score;
         const hurray = document.getElementById('hurray');
         hurray.classList.add('show');
         setTimeout(() => {

@@ -456,24 +456,14 @@ function drawFrog(lineY, isGreen) {
     ctx.ellipse(screenX, screenY + 4, frogSize * 0.7, frogSize * 0.4, 0, 0, Math.PI * 2);
     ctx.fill();
     
-    // Eyes
-    ctx.fillStyle = 'white';
+    // Eye bumps (without eyes)
+    ctx.fillStyle = color;
     ctx.beginPath();
     ctx.arc(screenX - 8, screenY - 10, 6, 0, Math.PI * 2);
     ctx.arc(screenX + 8, screenY - 10, 6, 0, Math.PI * 2);
     ctx.fill();
-    
-    // Pupils
-    ctx.fillStyle = '#1a1a2e';
-    ctx.beginPath();
-    ctx.arc(screenX - 7, screenY - 10, 3, 0, Math.PI * 2);
-    ctx.arc(screenX + 9, screenY - 10, 3, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Frog emoji label
-    ctx.font = '24px serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('🐸', screenX, screenY - 24);
+
+
     
     // Current position label
     ctx.fillStyle = color;
