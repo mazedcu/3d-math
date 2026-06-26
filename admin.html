@@ -200,83 +200,56 @@
             if (tabId === 'games') renderAdminGames();
         }
 
-        const CATEGORIES = [
-            {
-                title: '🔢 Numbers & Logic',
-                color: 'var(--accent)',
-                games: [
-                    { f: 'bomb.html', e: '💣', n: 'BOMB DEFUSAL' },
-                    { f: 'train.html', e: '🚂', n: 'TRAIN CONDUCTOR' },
-                    { f: 'submarine.html', e: '⚓', n: 'SUBMARINE DEPTHS' },
-                    { f: 'lcm.html', e: `<svg viewBox="0 0 50 50" width="1em" height="1em"><circle cx="17" cy="15" r="6" fill="#34d399" /><circle cx="33" cy="15" r="6" fill="#34d399" /><ellipse cx="25" cy="25" rx="20" ry="14" fill="#34d399" /><ellipse cx="25" cy="29" rx="14" ry="8" fill="#059669" /></svg>`, n: 'FROG LCM' },
-                    { f: 'jump.html', e: '🚀', n: 'COSMIC JUMPER' },
-                    { f: 'blob.html', e: '🔵', n: 'BLOBMERGE' },
-                    { f: 'unitary.html', e: '🍎', n: 'FRUIT SHOP' },
-                    { f: 'snake.html', e: `<svg viewBox="0 0 50 50" width="1em" height="1em"><path d="M 30 15 C 30 5, 10 5, 10 20 C 10 35, 40 25, 40 40 C 40 55, 20 55, 20 45" stroke="#4ade80" stroke-width="8" stroke-linecap="round" fill="none" /><path d="M 30 15 L 35 10 L 40 12 M 35 10 L 37 5" stroke="#f87171" stroke-width="2" stroke-linecap="round" fill="none" /></svg>`, n: 'MATH SNAKE' },
-                    { f: 'wormhole.html', e: '🌀', n: 'WORMHOLE' },
-                    { f: 'race.html', e: '🏎️', n: 'MATH RACE' },
-                    { f: 'plane.html', e: '✈️', n: 'BIPLANE MULTIPLES' }
-                ]
-            },
-            {
-                title: '🍕 Fractions & Proportions',
-                color: 'var(--success)',
-                games: [
-                    { f: 'marbles.html', e: '🔮', n: 'MARBLE PROBABILITY' },
-                    { f: 'cylinder.html', e: '🧪', n: 'CYLINDER MIXER' },
-                    { f: 'ratio-ninja.html', e: '⚔️', n: 'RATIO NINJA' },
-                    { f: 'aliens.html', e: '👾', n: 'MATH ALIEN' },
-                    { f: 'bridge.html', e: '🌉', n: 'FRACTION BRIDGE' },
-                    { f: 'ratio.html', e: '🍎', n: 'RATIO APPLES' },
-                    { f: 'space.html', e: '🚀', n: 'PERCENT SPACE LAUNCH' },
-                    { f: 'recipe.html', e: '🍳', n: 'RECIPE RATIO' }
-                ]
-            },
-            {
-                title: '🧮 Algebra & Pre-Algebra',
-                color: 'var(--danger)',
-                games: [
-                    { f: 'balance.html', e: '⚖️', n: 'BALANCE SCALE' },
-                    { f: 'cans.html', e: '🥫', n: 'FACTOR SHOOTER' }
-                ]
-            },
-            {
-                title: '📐 Geometry & Graphing',
-                color: '#c084fc',
-                games: [
-                    { f: 'abacus.html', e: '🧮', n: 'VIRTUAL ABACUS' },
-                    { f: 'crystal.html', e: '💎', n: 'CRYSTAL CARVER' },
-                    { f: 'laser.html', e: '🪞', n: 'LASER MIRRORS' },
-                    { f: 'tiles.html', e: '🧱', n: 'TILE MATH' },
-                    { f: 'missile.html', e: '🚀', n: 'DESTROY THE SHIP' },
-                    { f: 'cannon.html', e: '🎯', n: 'ANGLE CANNON' },
-                    { f: 'ship-battle.html', e: '⚓', n: 'SHIP BATTLE' },
-                    { f: 'tank-battle.html', e: '🛡️', n: 'TANK BATTLE' },
-                    { f: 'algebra-tiles.html', e: `<svg viewBox="0 0 50 50" width="1em" height="1em"><rect x="5" y="5" width="20" height="20" fill="#3b82f6" rx="2" /><rect x="30" y="5" width="8" height="20" fill="#22c55e" rx="1" /><rect x="30" y="30" width="8" height="8" fill="#eab308" rx="1" /><rect x="42" y="30" width="8" height="8" fill="#eab308" rx="1" /></svg>`, n: 'ALGEBRA TILES' }
-                ]
-            }
-        ];
-
-        function renderAdminGames() {
+        async function renderAdminGames() {
             const grid = document.getElementById('adminGamesGrid');
             if (grid.dataset.rendered) return;
             
-            grid.classList.remove('games-grid');
-            
-            grid.innerHTML = CATEGORIES.map(cat => `
-                <div style="margin-bottom: 40px;">
-                    <h3 style="color: ${cat.color}; margin-bottom: 20px; font-size: 1.5rem;">${cat.title}</h3>
-                    <div class="games-grid">
-                        ${cat.games.map(g => `
-                            <a href="${g.f}" target="_blank" rel="noopener" class="card game-card" style="text-decoration:none; color:var(--text-primary); display:block; text-align:center;">
-                                <div style="font-size: 3rem; margin-bottom: 10px; display:flex; justify-content:center; align-items:center;">${g.e}</div>
-                                <h4 style="font-size: 1.1rem;">${g.n}</h4>
+            try {
+                const res = await fetch('index.html');
+                const text = await res.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(text, 'text/html');
+                
+                const categories = doc.querySelectorAll('.category');
+                
+                grid.classList.remove('games-grid');
+                grid.innerHTML = '';
+                
+                categories.forEach(cat => {
+                    const titleEl = cat.querySelector('h3');
+                    const color = titleEl ? titleEl.style.color : 'var(--text-primary)';
+                    const title = titleEl ? titleEl.innerHTML : 'Category';
+                    
+                    const gamesHTML = Array.from(cat.querySelectorAll('.game-card')).map(card => {
+                        const href = card.getAttribute('href');
+                        const iconEl = Array.from(card.querySelectorAll('div')).find(div => div.style.fontSize.includes('3rem'));
+                        const icon = iconEl ? iconEl.innerHTML : '🎮';
+                        const nameEl = card.querySelector('h4');
+                        const name = nameEl ? nameEl.textContent : 'Unknown Game';
+                        
+                        return `
+                            <a href="${href}" target="_blank" rel="noopener" class="card game-card" style="text-decoration:none; color:var(--text-primary); display:block; text-align:center;">
+                                <div style="font-size: 3rem; margin-bottom: 10px; display:flex; justify-content:center; align-items:center;">${icon}</div>
+                                <h4 style="font-size: 1.1rem;">${name}</h4>
                             </a>
-                        `).join('')}
-                    </div>
-                </div>
-            `).join('');
-            grid.dataset.rendered = '1';
+                        `;
+                    }).join('');
+                    
+                    grid.innerHTML += `
+                        <div style="margin-bottom: 40px;">
+                            <h3 style="color: ${color}; margin-bottom: 20px; font-size: 1.5rem;">${title}</h3>
+                            <div class="games-grid">
+                                ${gamesHTML}
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                grid.dataset.rendered = '1';
+            } catch (e) {
+                console.error("Failed to load games from main page", e);
+                grid.innerHTML = '<p style="color: var(--danger);">Failed to load games from main page.</p>';
+            }
         }
 
         async function fetchTransactions() {
