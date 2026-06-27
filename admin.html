@@ -157,6 +157,7 @@
                 const res = await fetch('/api/admin/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
+                    credentials: 'same-origin',
                     body: JSON.stringify({ username, password })
                 });
                 
@@ -177,7 +178,7 @@
 
         async function doAdminLogout() {
             try {
-                await fetch('/api/admin/logout', { method: 'POST' });
+                await fetch('/api/admin/logout', { method: 'POST', credentials: 'same-origin' });
             } catch (e) {
                 console.error("Logout error", e);
             }
