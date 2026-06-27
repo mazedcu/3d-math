@@ -81,13 +81,27 @@ function generateTexture(number) {
     ctx.font = 'bold 50px Outfit';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(number, 64, 64);
+    ctx.fillText(number, 32, 64);
+    ctx.fillText(number, 96, 64);
     
     const tex = new THREE.CanvasTexture(canvas);
     return tex;
 }
 
-const geometry = new THREE.CylinderGeometry(1, 1, 3, 16);
+let bottleGeometry = new THREE.CylinderGeometry(1, 1, 3, 16);
+if (THREE.OBJLoader) {
+    const loader = new THREE.OBJLoader();
+    loader.load('assets/bottle.obj', (obj) => {
+        obj.traverse((child) => {
+            if (child.isMesh) {
+                bottleGeometry = child.geometry;
+                bottleGeometry.scale(2.5, 2.5, 2.5);
+                bottleGeometry.translate(0, -3.75, 0); // Center the bottle a bit
+            }
+        });
+    });
+}
+
 
 function spawnCan() {
     // Generate a random number. Some should be factors, some shouldn't.
@@ -100,7 +114,7 @@ function spawnCan() {
         shininess: 80
     });
     
-    const mesh = new THREE.Mesh(geometry, mat);
+    const mesh = new THREE.Mesh(bottleGeometry, mat);
     
     // Spawn at bottom
     mesh.position.set((Math.random() - 0.5) * 16, -10, (Math.random() - 0.5) * 4);
@@ -115,7 +129,7 @@ function spawnCan() {
         num,
         isFactor,
         vx: (Math.random() - 0.5) * 4,
-        vy: 12 + Math.random() * 4, // Initial upward velocity
+        vy: 20 + Math.random() * 8, // Throw much higher
         vz: (Math.random() - 0.5) * 2,
         rx: Math.random() * 5 - 2.5,
         ry: Math.random() * 5 - 2.5,
