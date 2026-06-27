@@ -1041,7 +1041,7 @@
                     }));
                     succEl.innerText = '🎉 Trial activated! Full access for 3 days. Redirecting...';
                     succEl.style.display = 'block';
-                    updateAuthUI();
+                    document.getElementById('auth-btn').innerText = 'Logout';
                     setTimeout(() => closeModals(), 2000);
                 } else {
                     errEl.innerText = data.error || 'Registration failed.';
