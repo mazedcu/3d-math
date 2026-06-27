@@ -41,7 +41,7 @@ function playError() {
 
 // ─── THREE.JS SETUP ────────────────────────────────────────────────
 const scene = new THREE.Scene();
-scene.background = new THREE.TextureLoader().load('assets/cloudy_bg.png');
+scene.background = new THREE.Color(0x87CEEB);
 
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
 camera.position.set(0, 0, 15);
