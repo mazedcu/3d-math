@@ -41,7 +41,7 @@ function playError() {
 
 // ─── THREE.JS SETUP ────────────────────────────────────────────────
 const scene = new THREE.Scene();
-scene.background = new THREE.TextureLoader().load('assets/jungle.png');
+scene.background = new THREE.TextureLoader().load('assets/brick_wall.png');
 
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
 camera.position.set(0, 0, 15);
@@ -55,6 +55,17 @@ scene.add(ambientLight);
 const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
 dirLight.position.set(10, 20, 10);
 scene.add(dirLight);
+
+// Add rusty bench
+const benchTex = new THREE.TextureLoader().load('assets/rusty_metal.png');
+benchTex.wrapS = THREE.RepeatWrapping;
+benchTex.wrapT = THREE.RepeatWrapping;
+benchTex.repeat.set(4, 1);
+const benchGeo = new THREE.BoxGeometry(40, 2, 4);
+const benchMat = new THREE.MeshPhongMaterial({ map: benchTex });
+const benchMesh = new THREE.Mesh(benchGeo, benchMat);
+benchMesh.position.set(0, -6, -20);
+scene.add(benchMesh);
 
 // ─── GAME STATE ────────────────────────────────────────────────────
 let targetNumber = 10;
@@ -108,8 +119,8 @@ function spawnBottles() {
     cans = [];
     nonFactorsRemaining = 0;
 
-    const startX = -12;
-    const spacing = 2.6;
+    const startX = -18;
+    const spacing = 4;
 
     for (let i = 0; i < 10; i++) {
         const num = Math.floor(Math.random() * 20) + 1;
@@ -124,7 +135,7 @@ function spawnBottles() {
         const mesh = new THREE.Mesh(bottleGeometry, mat);
         
         // Spawn in a line
-        mesh.position.set(startX + i * spacing, -5, 0);
+        mesh.position.set(startX + i * spacing, -4.5, -20);
         
         // Slight random rotation for variety
         mesh.rotation.y = Math.random() * Math.PI * 2;
