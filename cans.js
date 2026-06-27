@@ -41,7 +41,7 @@ function playError() {
 
 // ─── THREE.JS SETUP ────────────────────────────────────────────────
 const scene = new THREE.Scene();
-scene.fog = new THREE.FogExp2(0x020617, 0.02);
+scene.background = new THREE.TextureLoader().load('assets/jungle.png');
 
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
 camera.position.set(0, 0, 15);
@@ -62,8 +62,7 @@ let score = 0;
 let lives = 3;
 let playing = false;
 let cans = [];
-let spawnTimer = 0;
-let spawnRate = 2.0;
+let nonFactorsRemaining = 0;
 
 const mouse = new THREE.Vector2();
 const raycaster = new THREE.Raycaster();
@@ -103,38 +102,46 @@ if (THREE.OBJLoader) {
 }
 
 
-function spawnCan() {
-    // Generate a random number. Some should be factors, some shouldn't.
-    // Let's pick random from 1 to 20
-    const num = Math.floor(Math.random() * 20) + 1;
-    const isFactor = (targetNumber % num === 0);
+function spawnBottles() {
+    // Clear existing
+    cans.forEach(c => scene.remove(c.mesh));
+    cans = [];
+    nonFactorsRemaining = 0;
 
-    const mat = new THREE.MeshPhongMaterial({
-        map: generateTexture(num),
-        shininess: 80
-    });
+    const startX = -12;
+    const spacing = 2.6;
+
+    for (let i = 0; i < 10; i++) {
+        const num = Math.floor(Math.random() * 20) + 1;
+        const isFactor = (targetNumber % num === 0);
+        if (!isFactor) nonFactorsRemaining++;
+
+        const mat = new THREE.MeshPhongMaterial({
+            map: generateTexture(num),
+            shininess: 80
+        });
+        
+        const mesh = new THREE.Mesh(bottleGeometry, mat);
+        
+        // Spawn in a line
+        mesh.position.set(startX + i * spacing, -5, 0);
+        
+        // Slight random rotation for variety
+        mesh.rotation.y = Math.random() * Math.PI * 2;
+        
+        scene.add(mesh);
+        
+        cans.push({
+            mesh,
+            num,
+            isFactor
+        });
+    }
     
-    const mesh = new THREE.Mesh(bottleGeometry, mat);
-    
-    // Spawn at bottom
-    mesh.position.set((Math.random() - 0.5) * 16, -10, (Math.random() - 0.5) * 4);
-    
-    // Random rotation
-    mesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
-    
-    scene.add(mesh);
-    
-    cans.push({
-        mesh,
-        num,
-        isFactor,
-        vx: (Math.random() - 0.5) * 4,
-        vy: 15 + Math.random() * 5, // Lowered throw height
-        vz: (Math.random() - 0.5) * 2,
-        rx: Math.random() * 5 - 2.5,
-        ry: Math.random() * 5 - 2.5,
-        rz: Math.random() * 5 - 2.5
-    });
+    // If by chance there are no non-factors, generate again
+    if (nonFactorsRemaining === 0) {
+        spawnBottles();
+    }
 }
 
 // ─── GAME LOGIC ────────────────────────────────────────────────────
@@ -168,6 +175,7 @@ function startRound() {
     // Pick new target number < 20 (between 4 and 19)
     targetNumber = Math.floor(Math.random() * 16) + 4;
     dom.target.textContent = targetNumber;
+    spawnBottles();
 }
 
 dom.btnStart.addEventListener('click', () => {
@@ -209,11 +217,12 @@ window.addEventListener('mousedown', (e) => {
                 playHit();
                 score++;
                 dom.score.textContent = score;
-                // Speed up slightly
-                spawnRate = Math.max(0.6, spawnRate - 0.02);
+                nonFactorsRemaining--;
                 
-                // Change target every 5 points
-                if (score % 5 === 0) startRound();
+                // Clear round if all non-factors are gone
+                if (nonFactorsRemaining <= 0) {
+                    setTimeout(startRound, 500);
+                }
             } else {
                 // Wrong! Shot a factor
                 loseLife(`You shot ${can.num}, which IS a factor of ${targetNumber}!`);
@@ -241,37 +250,9 @@ function animate() {
         return;
     }
     
-    // Spawn
-    spawnTimer -= dt;
-    if (spawnTimer <= 0) {
-        spawnCan();
-        spawnTimer = spawnRate + Math.random() * 0.5;
-    }
-    
-    // Physics
-    for (let i = cans.length - 1; i >= 0; i--) {
-        const c = cans[i];
-        
-        c.mesh.position.x += c.vx * dt;
-        c.mesh.position.y += c.vy * dt;
-        c.mesh.position.z += c.vz * dt;
-        
-        c.mesh.rotation.x += c.rx * dt;
-        c.mesh.rotation.y += c.ry * dt;
-        c.mesh.rotation.z += c.rz * dt;
-        
-        c.vy -= 15 * dt; // Gravity
-        
-        // Check if fallen off
-        if (c.mesh.position.y < -12 && c.vy < 0) {
-            scene.remove(c.mesh);
-            cans.splice(i, 1);
-            
-            // If it was a non-factor, the player missed it!
-            if (!c.isFactor) {
-                loseLife(`You let ${c.num} drop, but it wasn't a factor of ${targetNumber}!`);
-            }
-        }
+    // Slowly rotate bottles
+    for (let i = 0; i < cans.length; i++) {
+        cans[i].mesh.rotation.y += 0.5 * dt;
     }
     
     renderer.render(scene, camera);
