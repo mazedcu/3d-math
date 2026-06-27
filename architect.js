@@ -158,10 +158,10 @@ function detectShape() {
         const isTrapezium = props.parallelPairs === 1; // Strict trapezium (only 1 pair parallel)
         
         if (currentTarget === 'Square' && isSquare) return true;
-        if (currentTarget === 'Rectangle' && isRectangle && !isSquare) return true;
-        if (currentTarget === 'Rhombus' && isRhombus && !isSquare) return true;
-        if (currentTarget === 'Parallelogram' && isParallelogram && !isRectangle && !isRhombus) return true;
-        if (currentTarget === 'Trapezium' && isTrapezium) return true;
+        if (currentTarget === 'Rectangle' && isRectangle) return true;
+        if (currentTarget === 'Rhombus' && isRhombus) return true;
+        if (currentTarget === 'Parallelogram' && isParallelogram) return true;
+        if (currentTarget === 'Trapezium' && props.parallelPairs >= 1) return true;
         
         return false;
     }

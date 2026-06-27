@@ -725,29 +725,70 @@ function physicsStep(dt) {
         if (!b.dragging) b.vel.sub(fv);
     });
 
-    // Ball-ball collision
+    // Spatial grid for Ball-ball collision
+    const CELL_SIZE = BALL_RADIUS * 2.5;
+    const grid = new Map();
+
+    const getCellKey = (pos) => {
+        const cx = Math.floor(pos.x / CELL_SIZE);
+        const cz = Math.floor(pos.z / CELL_SIZE);
+        return `${cx},${cz}`;
+    };
+
+    // Populate grid
     for (let i = 0; i < balls.length; i++) {
         if (balls[i].completed) continue;
-        for (let j = i + 1; j < balls.length; j++) {
-            if (balls[j].completed) continue;
-            const a = balls[i], b = balls[j];
-            const diff = new THREE.Vector3().subVectors(b.pos, a.pos);
-            const dist = diff.length();
-            const minD = BALL_RADIUS * 2;
-            if (dist < minD && dist > 0.001) {
-                const overlap = minD - dist;
-                const dir = diff.normalize();
-                if (!a.dragging && !b.dragging) {
-                    a.pos.addScaledVector(dir, -overlap * 0.5);
-                    b.pos.addScaledVector(dir, overlap * 0.5);
-                } else if (!a.dragging) a.pos.addScaledVector(dir, -overlap);
-                else if (!b.dragging) b.pos.addScaledVector(dir, overlap);
+        const key = getCellKey(balls[i].pos);
+        if (!grid.has(key)) grid.set(key, []);
+        grid.get(key).push(i);
+    }
 
-                const rv = new THREE.Vector3().subVectors(a.vel, b.vel);
-                const van = rv.dot(dir);
-                if (van > 0) {
-                    if (!a.dragging) a.vel.addScaledVector(dir, -van * 0.5);
-                    if (!b.dragging) b.vel.addScaledVector(dir, van * 0.5);
+    // Check collisions
+    const checked = new Set();
+    const offsets = [
+        [0,0], [1,0], [1,1], [0,1], [-1,1], [-1,0], [-1,-1], [0,-1], [1,-1]
+    ];
+
+    for (const [key, cellBalls] of grid.entries()) {
+        const [cx, cz] = key.split(',').map(Number);
+        for (let i = 0; i < cellBalls.length; i++) {
+            const bi = cellBalls[i];
+            const a = balls[bi];
+            
+            for (const [dx, dz] of offsets) {
+                const neighborKey = `${cx+dx},${cz+dz}`;
+                if (!grid.has(neighborKey)) continue;
+                const neighborBalls = grid.get(neighborKey);
+                
+                for (let j = 0; j < neighborBalls.length; j++) {
+                    const bj = neighborBalls[j];
+                    if (bi === bj) continue;
+                    
+                    // Prevent double checking
+                    const pairKey = bi < bj ? `${bi}-${bj}` : `${bj}-${bi}`;
+                    if (checked.has(pairKey)) continue;
+                    checked.add(pairKey);
+                    
+                    const b = balls[bj];
+                    const diff = new THREE.Vector3().subVectors(b.pos, a.pos);
+                    const dist = diff.length();
+                    const minD = BALL_RADIUS * 2;
+                    if (dist < minD && dist > 0.001) {
+                        const overlap = minD - dist;
+                        const dir = diff.normalize();
+                        if (!a.dragging && !b.dragging) {
+                            a.pos.addScaledVector(dir, -overlap * 0.5);
+                            b.pos.addScaledVector(dir, overlap * 0.5);
+                        } else if (!a.dragging) a.pos.addScaledVector(dir, -overlap);
+                        else if (!b.dragging) b.pos.addScaledVector(dir, overlap);
+
+                        const rv = new THREE.Vector3().subVectors(a.vel, b.vel);
+                        const van = rv.dot(dir);
+                        if (van > 0) {
+                            if (!a.dragging) a.vel.addScaledVector(dir, -van * 0.5);
+                            if (!b.dragging) b.vel.addScaledVector(dir, van * 0.5);
+                        }
+                    }
                 }
             }
         }

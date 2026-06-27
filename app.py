@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_from_directory, make_response
+from flask import Flask, request, jsonify, send_from_directory, make_response, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 import os
@@ -12,10 +12,14 @@ import re
 from collections import defaultdict
 from email.message import EmailMessage
 from werkzeug.security import generate_password_hash, check_password_hash
+from concurrent.futures import ThreadPoolExecutor
 
-app = Flask(__name__, static_folder='.', static_url_path='')
+app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', uuid.uuid4().hex)
-CORS(app, origins=os.environ.get('CORS_ORIGINS', '*').split(','))
+# Required for cookies to be sent cross-origin if needed, but not necessary here since frontend is on same origin
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+CORS(app, origins=os.environ.get('CORS_ORIGINS', '*').split(','), supports_credentials=True)
 
 # ------------------------------------------------------------------
 # Security headers — injected on every response
@@ -33,21 +37,42 @@ def add_security_headers(response):
 # Simple in-memory rate limiter (no extra dependencies)
 # ------------------------------------------------------------------
 _rate_store = defaultdict(list)   # key → list of timestamps
+_rate_lock = threading.Lock()
+
+def _cleanup_rate_store():
+    """Background task to prevent memory leaks in the rate limiter"""
+    while True:
+        time.sleep(300) # Every 5 minutes
+        now = time.time()
+        with _rate_lock:
+            # Create list of keys to delete to avoid modifying dict while iterating
+            to_delete = []
+            for key, timestamps in _rate_store.items():
+                valid_timestamps = [t for t in timestamps if now - t < 60]
+                if not valid_timestamps:
+                    to_delete.append(key)
+                else:
+                    _rate_store[key] = valid_timestamps
+            
+            for key in to_delete:
+                del _rate_store[key]
+
+# Start cleanup thread
+threading.Thread(target=_cleanup_rate_store, daemon=True).start()
 
 def _rate_limited(key, max_requests, window_seconds):
     """Return True if the key has exceeded max_requests within window."""
     now = time.time()
-    timestamps = _rate_store[key]
-    # Prune old entries
-    _rate_store[key] = [t for t in timestamps if now - t < window_seconds]
-    if len(_rate_store[key]) >= max_requests:
-        return True
-    _rate_store[key].append(now)
+    with _rate_lock:
+        timestamps = _rate_store[key]
+        _rate_store[key] = [t for t in timestamps if now - t < window_seconds]
+        if len(_rate_store[key]) >= max_requests:
+            return True
+        _rate_store[key].append(now)
     return False
 
 def rate_limit(endpoint, max_req=5, window=60):
-    """Check rate limit for the current request IP + endpoint.
-    Returns a 429 response if exceeded, or None if OK."""
+    """Check rate limit for the current request IP + endpoint."""
     ip = request.remote_addr or 'unknown'
     key = f"{endpoint}:{ip}"
     if _rate_limited(key, max_req, window):
@@ -97,40 +122,31 @@ FROM_EMAIL = os.environ.get('FROM_EMAIL', SMTP_USER)
 FROM_NAME = os.environ.get('FROM_NAME', 'Numberfield')
 SITE_URL = os.environ.get('SITE_URL', 'https://numberfield.xyz')
 
-
-def _send_email_sync(to_email, subject, text_body, html_body=None):
-    """Send a single email via SMTP. Logs and swallows errors so the
-    caller (e.g. an admin approval) never fails just because mail did."""
-    if not (SMTP_USER and SMTP_PASS):
-        print('[email] SMTP_USER/SMTP_PASS not configured; skipping email to', to_email)
-        return
-    try:
-        msg = EmailMessage()
-        msg['Subject'] = subject
-        msg['From'] = f'{FROM_NAME} <{FROM_EMAIL}>'
-        msg['To'] = to_email
-        msg.set_content(text_body)
-        if html_body:
-            msg.add_alternative(html_body, subtype='html')
-
-        context = ssl.create_default_context()
-        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=20) as server:
-            server.ehlo()
-            server.starttls(context=context)
-            server.login(SMTP_USER, SMTP_PASS)
-            server.send_message(msg)
-        print('[email] sent to', to_email, '-', subject)
-    except Exception as e:
-        print('[email] FAILED to send to', to_email, ':', repr(e))
-
+_email_executor = ThreadPoolExecutor(max_workers=2)
 
 def send_email_async(to_email, subject, text_body, html_body=None):
     """Fire-and-forget email so HTTP requests are not blocked by SMTP latency."""
-    threading.Thread(
-        target=_send_email_sync,
-        args=(to_email, subject, text_body, html_body),
-        daemon=True,
-    ).start()
+    def send():
+        try:
+            msg = EmailMessage()
+            msg['Subject'] = subject
+            msg['From'] = f'{FROM_NAME} <{FROM_EMAIL}>'
+            msg['To'] = to_email
+            msg.set_content(text_body)
+            if html_body:
+                msg.add_alternative(html_body, subtype='html')
+
+            context = ssl.create_default_context()
+            with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=20) as server:
+                server.ehlo()
+                server.starttls(context=context)
+                server.login(SMTP_USER, SMTP_PASS)
+                server.send_message(msg)
+            print('[email] sent to', to_email, '-', subject)
+        except Exception as e:
+            print('[email] FAILED to send to', to_email, ':', repr(e))
+
+    _email_executor.submit(send)
 
 
 def send_approval_email(user, plan, end_date):
@@ -240,24 +256,55 @@ class Transaction(db.Model):
 
     user = db.relationship('User', backref=db.backref('transactions', lazy=True))
 
-with app.app_context():
-    try:
+try:
+    with app.app_context():
         db.create_all()
-    except Exception as e:
-        pass
+except Exception as e:
+    app.logger.error(f"Failed to initialize database: {e}")
 
 # Serve static files (HTML, JS, CSS)
 @app.route('/')
-def index():
+def serve_index():
     return send_from_directory('.', 'index.html')
 
 @app.route('/<path:path>')
 def serve_static(path):
-    if os.path.exists(path):
+    if not path.startswith('premium_games/') and os.path.exists(path):
         return send_from_directory('.', path)
-    return "Not found", 404
+    return "Not Found", 404
 
+# ------------------------------------------------------------------
+# Premium Game Access (Paywall)
+# ------------------------------------------------------------------
+@app.route('/play')
+def play_game():
+    game = request.args.get('game')
+    if not game:
+        return "Game not specified", 400
+        
+    user_id = session.get('user_id')
+    if not user_id:
+        return "Unauthorized. Please log in.", 401
+        
+    user = User.query.get(user_id)
+    if not user:
+        session.pop('user_id', None)
+        return "Unauthorized.", 401
+        
+    # Check subscription status
+    if user.current_status != 'active':
+        # See if they were on a trial that just expired
+        if user.end_date and user.end_date < datetime.datetime.utcnow():
+            user.current_status = 'inactive'
+            db.session.commit()
+        return "Subscription inactive.", 403
+        
+    filename = f"{game}.html"
+    return send_from_directory('premium_games', filename)
+
+# ------------------------------------------------------------------
 # Auth API Endpoints
+# ------------------------------------------------------------------
 @app.route('/api/register', methods=['POST'])
 def register():
     rl = rate_limit('register', max_req=5, window=60)
@@ -286,6 +333,7 @@ def register():
     db.session.add(user)
     db.session.commit()
 
+    session['user_id'] = user.id
     return jsonify({"message": "Registration successful"}), 201
 
 @app.route('/api/trial/register', methods=['POST'])
@@ -323,6 +371,7 @@ def trial_register():
     db.session.add(user)
     db.session.commit()
 
+    session['user_id'] = user.id
     return jsonify({
         "message": "Trial started!",
         "name": user.name,
@@ -345,51 +394,51 @@ def login():
     if not user or not check_password_hash(user.password_hash, password):
         return jsonify({"error": "Invalid email or password"}), 401
 
-    # Check if subscription is still active
-    is_active = False
-    now = datetime.datetime.utcnow()
-    if user.current_status == 'active' and user.end_date:
-        if user.end_date > now:
-            is_active = True
-        else:
-            user.current_status = 'inactive'
-            db.session.commit()
+    session['user_id'] = user.id
 
-    # Determine trial status (trial users have no paid transaction)
-    has_paid = any(t.status == 'approved' for t in user.transactions)
-    is_trial = is_active and not has_paid
-    days_left = max(0, (user.end_date - now).days) if user.end_date and is_active else 0
+    is_active = user.current_status == 'active'
+    if is_active and user.end_date and user.end_date < datetime.datetime.utcnow():
+        is_active = False
+        user.current_status = 'inactive'
+        db.session.commit()
+
+    return jsonify({
+        "message": "Login successful",
+        "name": user.name,
+        "email": user.email,
+        "is_active": is_active,
+        "end_date": user.end_date.isoformat() if user.end_date else None,
+        "is_trial": user.end_date is not None and user.end_date < datetime.datetime.utcnow() + datetime.timedelta(days=365)
+    }), 200
+
+@app.route('/api/logout', methods=['POST'])
+def logout():
+    session.pop('user_id', None)
+    return jsonify({"message": "Logged out successfully"}), 200
+
+@app.route('/api/status', methods=['GET'])
+def status():
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+        
+    user = User.query.get(user_id)
+    if not user:
+        session.pop('user_id', None)
+        return jsonify({"error": "User not found"}), 404
+
+    is_active = user.current_status == 'active'
+    if is_active and user.end_date and user.end_date < datetime.datetime.utcnow():
+        is_active = False
+        user.current_status = 'inactive'
+        db.session.commit()
 
     return jsonify({
         "name": user.name,
         "email": user.email,
         "is_active": is_active,
-        "is_trial": is_trial,
-        "days_left": days_left,
-        "end_date": user.end_date.isoformat() if user.end_date else None
-    }), 200
-
-@app.route('/api/status', methods=['POST'])
-def status():
-    data = request.json
-    email = data.get('email')
-    
-    user = User.query.filter_by(email=email).first()
-    if not user:
-        return jsonify({"error": "User not found"}), 404
-
-    is_active = False
-    now = datetime.datetime.utcnow()
-    if user.current_status == 'active' and user.end_date:
-        if user.end_date > datetime.datetime.utcnow():
-            is_active = True
-        else:
-            user.current_status = 'inactive'
-            db.session.commit()
-
-    return jsonify({
-        "is_active": is_active,
-        "end_date": user.end_date.isoformat() if user.end_date else None
+        "end_date": user.end_date.isoformat() if user.end_date else None,
+        "is_trial": user.end_date is not None and user.end_date < datetime.datetime.utcnow() + datetime.timedelta(days=365)
     }), 200
 
 
@@ -440,12 +489,19 @@ def subscribe():
     rl = rate_limit('subscribe', max_req=5, window=60)
     if rl: return rl
 
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+        
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"error": "User not found, please log in again"}), 401
+
     data = request.json
-    email = (data.get('email') or '').strip().lower()
     trx_id = (data.get('trx_id') or '').strip()
     plan = data.get('plan')
 
-    if not all([email, trx_id, plan]):
+    if not all([trx_id, plan]):
         return jsonify({"error": "Missing required fields"}), 400
 
     if len(trx_id) > 100:
@@ -453,10 +509,6 @@ def subscribe():
 
     if plan not in ('monthly', 'yearly'):
         return jsonify({"error": "Invalid plan."}), 400
-
-    user = User.query.filter_by(email=email).first()
-    if not user:
-        return jsonify({"error": "User not found, please log in again"}), 401
 
     # Check if trx_id already exists
     if Transaction.query.filter_by(trx_id=trx_id).first():

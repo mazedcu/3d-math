@@ -1,7 +1,6 @@
 import paramiko
 import time
 import os
-import getpass
 
 def run_cmd(ssh, cmd):
     print(f"Executing: {cmd}")
@@ -63,15 +62,15 @@ try:
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     print("Connecting to 198.211.96.4...")
-    password = os.environ.get('DROPLET_PASS') or getpass.getpass('Droplet root password: ')
-    ssh.connect('198.211.96.4', username='root', password=password)
+    ssh.connect('198.211.96.4', username='root', password='114598Tonni')
     print("Connected successfully!")
     
     print("\n--- Installing Dependencies ---")
     run_cmd(ssh, 'apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y nginx python3-pip python3-venv git certbot python3-certbot-nginx')
     
     print("\n--- Deploying Numberfield ---")
-    run_cmd(ssh, 'cp /var/www/html/database.db /tmp/database_backup.db || true')
+    run_cmd(ssh, "systemctl stop mathhub || true")
+    run_cmd(ssh, "cp /var/www/html/database.db /tmp/database_backup.db || true")
     run_cmd(ssh, 'rm -rf /var/www/html')
     run_cmd(ssh, 'git clone https://github.com/mazedcu/3d-math.git /var/www/html')
     run_cmd(ssh, 'cp /tmp/database_backup.db /var/www/html/database.db || true')
