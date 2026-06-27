@@ -47,7 +47,7 @@ function generateRound() {
     targetPoints = [];
     placedPoints = [];
     
-    // Grid is 10x10. Unit=50px. Y-axis is at x=5 (250px).
+    // Grid is 10x10. Unit=40px. Y-axis is at x=5 (200px).
     // Left side is x: 1 to 4. y: 1 to 9.
     
     let pts = [];
@@ -67,11 +67,11 @@ function generateRound() {
     pts.forEach(p => {
         let div = document.createElement('div');
         div.className = 'point';
-        div.style.left = `${p.x * 50}px`;
-        div.style.top = `${p.y * 50}px`;
+        div.style.left = `${p.x * 40}px`;
+        div.style.top = `${p.y * 40}px`;
         grid.appendChild(div);
         
-        pointsStr += `${p.x * 50},${p.y * 50} `;
+        pointsStr += `${p.x * 40},${p.y * 40} `;
     });
     polyLeft.setAttribute('points', pointsStr.trim());
 }
@@ -83,8 +83,8 @@ grid.addEventListener('click', (e) => {
     const cy = e.clientY - rect.top;
     
     // Snap to grid
-    let gx = Math.round(cx / 50);
-    let gy = Math.round(cy / 50);
+    let gx = Math.round(cx / 40);
+    let gy = Math.round(cy / 40);
     
     // Prevent clicking on left side or out of bounds
     if (gx <= 5 || gx > 9 || gy < 1 || gy > 9) return;
@@ -99,8 +99,8 @@ grid.addEventListener('click', (e) => {
         
         let div = document.createElement('div');
         div.className = 'point-mirror';
-        div.style.left = `${gx * 50}px`;
-        div.style.top = `${gy * 50}px`;
+        div.style.left = `${gx * 40}px`;
+        div.style.top = `${gy * 40}px`;
         grid.appendChild(div);
         
         // Draw partial or full polygon
@@ -111,7 +111,7 @@ grid.addEventListener('click', (e) => {
             // Draw right polygon matching left's order
             let rPtsStr = '';
             targetPoints.forEach(p => {
-                rPtsStr += `${p.x * 50},${p.y * 50} `;
+                rPtsStr += `${p.x * 40},${p.y * 40} `;
             });
             polyRight.setAttribute('points', rPtsStr.trim());
             

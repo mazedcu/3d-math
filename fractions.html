@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fraction Cake</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <style>
+        html, body {
+            overflow: auto !important;
+            height: auto !important;
+        }
+        body {
+            background-color: #fdf4ff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            color: #4a044e;
+            margin: 0;
+            background-image: radial-gradient(circle at center, #fae8ff 0%, #fdf4ff 100%);
+            overflow: auto !important;
+            height: auto !important;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .header { margin-top: 20px; text-align: center; }
+
+        .game-area {
+            display: flex;
+            gap: 50px;
+            margin-top: 24px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        /* -------- Cake -------- */
+        .cake-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .cake-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+        }
+
+        .cake-svg {
+            width: 100%; height: 100%;
+            filter: drop-shadow(0 8px 24px rgba(190,24,93,0.15));
+        }
+
+        .cake-base {
+            fill: #fff5f8;
+            stroke: #f9a8d4;
+            stroke-width: 0.04;
+        }
+
+        .slice {
+            fill: rgba(255,240,245,0.01);
+            stroke: #f9a8d4;
+            stroke-width: 0.02;
+            cursor: pointer;
+            transition: fill 0.18s;
+        }
+        .slice:hover {
+            fill: #fce7f3;
+        }
+        .slice.selected {
+            fill: #f472b6;
+        }
+
+        .cut-line {
+            stroke: #be185d;
+            stroke-width: 0.022;
+            stroke-linecap: round;
+        }
+
+        /* -------- Cut option buttons -------- */
+        .cut-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            max-width: 320px;
+        }
+
+        .cut-btn {
+            padding: 10px 16px;
+            border-radius: 12px;
+            border: 2px solid #f9a8d4;
+            background: white;
+            font-family: var(--fd);
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #be185d;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-width: 52px;
+            text-align: center;
+        }
+        .cut-btn:hover {
+            background: #fce7f3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(236,72,153,0.2);
+        }
+        .cut-btn.active {
+            background: linear-gradient(135deg, #ec4899, #f43f5e);
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 4px 16px rgba(236,72,153,0.35);
+            transform: translateY(-1px);
+        }
+
+        .cut-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #9d174d;
+            margin-bottom: 4px;
+        }
+
+        /* -------- Selected count -------- */
+        .selection-info {
+            background: white;
+            padding: 10px 20px;
+            border-radius: 14px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            font-weight: 600;
+            color: #831843;
+            font-size: 0.95rem;
+            text-align: center;
+            min-width: 200px;
+        }
+        .selection-info .frac {
+            font-family: var(--fm);
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #ec4899;
+        }
+
+        /* -------- Give button -------- */
+        .give-btn {
+            background: linear-gradient(135deg, #10b981, #34d399);
+            color: white;
+            border: none;
+            padding: 14px 36px;
+            border-radius: 20px;
+            font-size: 1.15rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 18px rgba(16, 185, 129, 0.35);
+            transition: all 0.2s;
+            font-family: var(--fd);
+        }
+        .give-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px rgba(16, 185, 129, 0.45);
+        }
+        .give-btn:active { transform: translateY(0); }
+        .give-btn:disabled {
+            background: #cbd5e1;
+            box-shadow: none;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* -------- Boy character -------- */
+        .boy-container {
+            width: 220px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+        }
+
+        .boy-svg {
+            width: 160px;
+            height: 220px;
+            transition: transform 0.3s;
+        }
+
+        .boy-body { fill: #38bdf8; }
+        .boy-head-skin { fill: #fcd34d; }
+        .boy-hair { fill: #78350f; }
+        .boy-hand { fill: #fcd34d; }
+        .boy-plate { fill: #e2e8f0; stroke: #cbd5e1; stroke-width: 1; }
+        .boy-leg { fill: #1e3a5f; }
+        .boy-shoe { fill: #374151; }
+
+        .speech-bubble {
+            background: white;
+            border: 2px solid #ec4899;
+            border-radius: 16px;
+            padding: 12px 18px;
+            font-size: 1rem;
+            font-weight: 700;
+            color: #be185d;
+            text-align: center;
+            margin-bottom: 10px;
+            position: relative;
+            box-shadow: 0 4px 12px rgba(236,72,153,0.15);
+            min-width: 180px;
+        }
+        .speech-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 10px solid white;
+        }
+        .speech-bubble::before {
+            content: '';
+            position: absolute;
+            bottom: -13px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 12px solid transparent;
+            border-right: 12px solid transparent;
+            border-top: 12px solid #ec4899;
+        }
+
+        /* Animations */
+        .happy .boy-svg {
+            animation: bounce 0.5s infinite alternate;
+        }
+        .sad .boy-svg {
+            animation: shake 0.3s infinite alternate;
+        }
+
+        @keyframes bounce {
+            from { transform: translateY(0); }
+            to { transform: translateY(-18px); }
+        }
+        @keyframes shake {
+            0% { transform: translateX(-3px); }
+            100% { transform: translateX(3px); }
+        }
+
+        /* -------- HUD -------- */
+        .hud-top {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            width: 100%;
+            max-width: 600px;
+            margin-top: 18px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .score-box {
+            font-size: 1.1rem;
+            color: #b45309;
+            font-weight: 700;
+            background: white;
+            padding: 10px 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        /* -------- Feedback overlay -------- */
+        .feedback-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            opacity: 0;
+        }
+        .feedback-overlay.show {
+            animation: feedbackPop 1.3s ease forwards;
+        }
+        @keyframes feedbackPop {
+            0%   { opacity: 0; }
+            12%  { opacity: 1; }
+            65%  { opacity: 1; }
+            100% { opacity: 0; }
+        }
+        .feedback-text {
+            font-family: var(--fd);
+            font-size: 2.5rem;
+            font-weight: 900;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.12);
+        }
+        .feedback-text.correct { color: #10b981; }
+        .feedback-text.wrong   { color: #f43f5e; }
+
+        /* -------- How to play -------- */
+        .how-to-play {
+            background: white;
+            border-radius: 16px;
+            padding: 14px 22px;
+            margin-top: 18px;
+            margin-bottom: 30px;
+            max-width: 520px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+            border: 1px solid #fce7f3;
+            font-size: 0.82rem;
+            color: #831843;
+            line-height: 1.6;
+        }
+        .how-to-play h3 { margin: 0 0 6px; color: #be185d; font-size: 0.92rem; }
+        .how-to-play ol { margin: 0; padding-left: 18px; }
+        .how-to-play li { margin-bottom: 3px; }
+
+        @media (max-width: 700px) {
+            .cake-container { width: 250px; height: 250px; }
+            .game-area { gap: 30px; }
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="btn" style="position: absolute; top: 20px; left: 20px; background: white; border-color: #cbd5e1;">🏠 Menu</a>
+
+    <div class="header">
+        <h1 style="color: #be185d; margin: 0;">FRACTION CAKE</h1>
+        <p style="color: #831843; margin-top: 5px;">Cut the cake, pick the right slices, and feed the boy!</p>
+    </div>
+
+    <div class="hud-top">
+        <div class="score-box">⭐ Score: <span id="score">0</span></div>
+    </div>
+
+    <div class="game-area">
+        <div class="cake-wrap">
+            <!-- Cut options -->
+            <div class="cut-label">🔪 Choose how to cut the cake:</div>
+            <div class="cut-options" id="cut-options"></div>
+
+            <!-- Cake -->
+            <div class="cake-container">
+                <svg class="cake-svg" id="cake-svg" viewBox="-1.15 -1.15 2.3 2.3"></svg>
+            </div>
+
+            <!-- Selection info -->
+            <div class="selection-info">
+                You selected: <span class="frac" id="sel-frac">0/1</span>
+            </div>
+
+            <button class="give-btn" id="btn-give" disabled>Give Cake! 🍰</button>
+        </div>
+
+        <!-- Boy -->
+        <div class="boy-container" id="boy-container">
+            <div class="speech-bubble" id="speech-bubble">
+                Please give me <strong><span id="target-frac">1/2</span></strong>!
+            </div>
+            <svg class="boy-svg" viewBox="0 0 100 170">
+                <!-- Legs -->
+                <rect class="boy-leg" x="32" y="130" width="12" height="24" rx="5" />
+                <rect class="boy-leg" x="56" y="130" width="12" height="24" rx="5" />
+                <!-- Shoes -->
+                <ellipse class="boy-shoe" cx="38" cy="155" rx="10" ry="5" />
+                <ellipse class="boy-shoe" cx="62" cy="155" rx="10" ry="5" />
+                <!-- Body (shirt) -->
+                <rect class="boy-body" x="25" y="68" width="50" height="65" rx="12" />
+                <!-- Arms -->
+                <rect class="boy-hand" x="8" y="85" width="20" height="10" rx="5" />
+                <rect class="boy-hand" x="72" y="85" width="20" height="10" rx="5" />
+                <!-- Plate on hands -->
+                <ellipse class="boy-plate" cx="50" cy="100" rx="0" ry="0" id="boy-plate" />
+                <!-- Head (no facial features) -->
+                <circle class="boy-head-skin" cx="50" cy="42" r="26" />
+                <!-- Hair — messy top hair -->
+                <path class="boy-hair" d="
+                    M 24 42
+                    Q 24 18 38 12
+                    Q 44 9 50 10
+                    Q 56 9 62 12
+                    Q 76 18 76 42
+                    Q 76 32 70 26
+                    Q 64 20 56 18
+                    Q 50 16 44 18
+                    Q 36 20 30 26
+                    Q 24 32 24 42 Z
+                " />
+                <!-- Extra hair tufts -->
+                <path class="boy-hair" d="M 36 14 Q 32 4 40 8 Q 44 6 42 12 Z" />
+                <path class="boy-hair" d="M 56 12 Q 54 2 62 6 Q 66 4 64 12 Z" />
+                <path class="boy-hair" d="M 46 11 Q 48 2 52 3 Q 54 4 52 11 Z" />
+            </svg>
+        </div>
+    </div>
+
+    <div class="how-to-play">
+        <h3>📖 How to Play</h3>
+        <ol>
+            <li>Choose how many slices to cut the cake into</li>
+            <li>Tap the slices you want to give</li>
+            <li>Press <strong>Give Cake!</strong> when ready</li>
+        </ol>
+    </div>
+
+    <!-- Feedback overlay -->
+    <div class="feedback-overlay" id="feedback-overlay">
+        <div class="feedback-text" id="feedback-text"></div>
+    </div>
+
+    <script src="fractions.js"></script>
+</body>
+</html>

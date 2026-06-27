@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Equivalent Fractions</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <style>
+        html, body {
+            overflow: auto !important;
+            height: auto !important;
+        }
+        body {
+            background: #0f0a2e;
+            background-image:
+                radial-gradient(ellipse at 20% 50%, rgba(124,58,237,0.15) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 50%, rgba(6,182,212,0.12) 0%, transparent 60%),
+                radial-gradient(ellipse at 50% 100%, rgba(236,72,153,0.1) 0%, transparent 50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            color: #e2e8f0;
+            margin: 0;
+            font-family: 'Outfit', sans-serif;
+            user-select: none;
+        }
+
+        /* ---- Header ---- */
+        .header { margin-top: 22px; text-align: center; }
+        .header h1 {
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            background: linear-gradient(135deg, #a78bfa, #22d3ee, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .header p {
+            color: rgba(226,232,240,0.6);
+            margin-top: 4px;
+            font-size: 0.9rem;
+        }
+
+        /* ---- HUD ---- */
+        .hud-bar {
+            display: flex;
+            gap: 16px;
+            margin-top: 16px;
+            align-items: center;
+        }
+        .hud-pill {
+            background: rgba(255,255,255,0.07);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 14px;
+            padding: 8px 20px;
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+        .hud-pill .val {
+            font-family: 'JetBrains Mono', monospace;
+            color: #a78bfa;
+            font-size: 1.15rem;
+        }
+        .hud-pill.streak .val { color: #f59e0b; }
+
+        /* ---- Arena ---- */
+        .arena {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 32px;
+            flex-wrap: wrap;
+            position: relative;
+        }
+
+        /* ---- Card ---- */
+        .card {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 24px;
+            padding: 28px 32px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            min-width: 240px;
+            transition: transform 0.6s cubic-bezier(.25,.8,.25,1), opacity 0.4s, box-shadow 0.3s;
+            position: relative;
+        }
+        .card.reference {
+            border-color: rgba(167,139,250,0.25);
+            box-shadow: 0 0 40px rgba(167,139,250,0.08);
+        }
+        .card.player {
+            border-color: rgba(34,211,238,0.25);
+            box-shadow: 0 0 40px rgba(34,211,238,0.08);
+        }
+        .card-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: rgba(226,232,240,0.4);
+        }
+        .card.reference .card-label { color: #a78bfa; }
+        .card.player .card-label { color: #22d3ee; }
+
+        /* ---- Fraction number display ---- */
+        .frac-display {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+            line-height: 1;
+        }
+        .frac-num, .frac-den {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2.4rem;
+            font-weight: 700;
+        }
+        .frac-line {
+            width: 60px;
+            height: 3px;
+            border-radius: 2px;
+            margin: 4px 0;
+        }
+        .card.reference .frac-num { color: #c4b5fd; }
+        .card.reference .frac-den { color: #c4b5fd; }
+        .card.reference .frac-line { background: #a78bfa; }
+        .card.player .frac-num { color: #67e8f9; }
+        .card.player .frac-den { color: #67e8f9; }
+        .card.player .frac-line { background: #22d3ee; }
+
+        /* ---- Circle visual ---- */
+        .circle-wrap {
+            width: 160px;
+            height: 160px;
+            position: relative;
+        }
+        .circle-svg {
+            width: 100%;
+            height: 100%;
+        }
+        .cake-bg {
+            fill: rgba(255,255,255,0.04);
+            stroke: rgba(255,255,255,0.1);
+            stroke-width: 0.04;
+        }
+        .ref-slice {
+            fill: rgba(167,139,250,0.5);
+            stroke: rgba(167,139,250,0.3);
+            stroke-width: 0.02;
+            transition: d 0.4s ease, fill 0.3s;
+        }
+        .ref-cut {
+            stroke: rgba(167,139,250,0.35);
+            stroke-width: 0.018;
+        }
+        .player-slice {
+            fill: rgba(34,211,238,0.5);
+            stroke: rgba(34,211,238,0.3);
+            stroke-width: 0.02;
+            transition: d 0.4s ease, fill 0.3s;
+        }
+        .player-cut {
+            stroke: rgba(34,211,238,0.35);
+            stroke-width: 0.018;
+        }
+
+        /* ---- VS badge ---- */
+        .vs-badge {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1rem;
+            color: rgba(226,232,240,0.5);
+            letter-spacing: 1px;
+            flex-shrink: 0;
+        }
+
+        /* ---- Input area ---- */
+        .input-row {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+        }
+        .frac-input {
+            width: 70px;
+            padding: 8px 4px;
+            border-radius: 10px;
+            border: 2px solid rgba(34,211,238,0.25);
+            background: rgba(255,255,255,0.06);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.8rem;
+            font-weight: 700;
+            text-align: center;
+            color: #67e8f9;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .frac-input:focus {
+            border-color: #22d3ee;
+            box-shadow: 0 0 16px rgba(34,211,238,0.2);
+        }
+        .frac-input::placeholder {
+            color: rgba(34,211,238,0.25);
+            font-size: 0.9rem;
+        }
+        .input-divider {
+            width: 60px;
+            height: 3px;
+            background: #22d3ee;
+            border-radius: 2px;
+            margin: 6px 0;
+        }
+
+        /* ---- Check button ---- */
+        .check-btn {
+            margin-top: 28px;
+            padding: 16px 48px;
+            border: none;
+            border-radius: 18px;
+            background: linear-gradient(135deg, #7c3aed, #a855f7, #ec4899);
+            color: white;
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.15rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            cursor: pointer;
+            box-shadow: 0 6px 30px rgba(124,58,237,0.35);
+            transition: all 0.25s;
+            position: relative;
+            overflow: hidden;
+        }
+        .check-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+            border-radius: 18px;
+        }
+        .check-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 40px rgba(124,58,237,0.45);
+        }
+        .check-btn:active { transform: translateY(0); }
+        .check-btn:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* ---- Animations for match check ---- */
+        .card.slide-in-left {
+            animation: slideLeft 0.7s cubic-bezier(.25,.8,.25,1) forwards;
+        }
+        .card.slide-in-right {
+            animation: slideRight 0.7s cubic-bezier(.25,.8,.25,1) forwards;
+        }
+        @keyframes slideLeft {
+            0%   { transform: translateX(0); }
+            100% { transform: translateX(calc(50% + 40px)); }
+        }
+        @keyframes slideRight {
+            0%   { transform: translateX(0); }
+            100% { transform: translateX(calc(-50% - 40px)); }
+        }
+
+        .card.bounce-back-left {
+            animation: bounceLeft 0.5s cubic-bezier(.25,.8,.25,1) forwards;
+        }
+        .card.bounce-back-right {
+            animation: bounceRight 0.5s cubic-bezier(.25,.8,.25,1) forwards;
+        }
+        @keyframes bounceLeft {
+            0%   { transform: translateX(calc(50% + 40px)); }
+            40%  { transform: translateX(-20px); }
+            100% { transform: translateX(0); }
+        }
+        @keyframes bounceRight {
+            0%   { transform: translateX(calc(-50% - 40px)); }
+            40%  { transform: translateX(20px); }
+            100% { transform: translateX(0); }
+        }
+
+        .card.matched {
+            box-shadow: 0 0 60px rgba(16,185,129,0.4);
+            border-color: rgba(16,185,129,0.5);
+        }
+        .card.wrong-shake {
+            animation: wrongShake 0.4s ease;
+        }
+        @keyframes wrongShake {
+            0%, 100% { transform: translateX(0); }
+            20%  { transform: translateX(-12px); }
+            40%  { transform: translateX(12px); }
+            60%  { transform: translateX(-8px); }
+            80%  { transform: translateX(8px); }
+        }
+
+        /* ---- Feedback banner ---- */
+        .feedback-banner {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 200;
+            pointer-events: none;
+            opacity: 0;
+        }
+        .feedback-banner.show {
+            animation: bannerPop 1.6s cubic-bezier(.16,1,.3,1) forwards;
+        }
+        @keyframes bannerPop {
+            0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+            15%  { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+            30%  { transform: translate(-50%, -50%) scale(1); }
+            70%  { opacity: 1; }
+            100% { opacity: 0; transform: translate(-50%, -55%) scale(1); }
+        }
+        .feedback-inner {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.8rem;
+            font-weight: 900;
+            letter-spacing: 2px;
+            text-shadow: 0 4px 30px rgba(0,0,0,0.3);
+        }
+        .feedback-inner.yay {
+            background: linear-gradient(135deg, #34d399, #a3e635, #fbbf24);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .feedback-inner.nope {
+            background: linear-gradient(135deg, #f43f5e, #fb923c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* ---- Confetti ---- */
+        .confetti-canvas {
+            position: fixed;
+            inset: 0;
+            z-index: 150;
+            pointer-events: none;
+        }
+
+        /* ---- How to play ---- */
+        .how-box {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 16px;
+            padding: 14px 24px;
+            margin-top: 28px;
+            margin-bottom: 32px;
+            max-width: 500px;
+            font-size: 0.8rem;
+            color: rgba(226,232,240,0.5);
+            line-height: 1.7;
+        }
+        .how-box h3 {
+            margin: 0 0 6px;
+            font-size: 0.88rem;
+            color: rgba(226,232,240,0.7);
+        }
+        .how-box ol { margin: 0; padding-left: 16px; }
+        .how-box li { margin-bottom: 2px; }
+
+        /* ---- Responsive ---- */
+        @media (max-width: 620px) {
+            .arena { gap: 16px; }
+            .card { padding: 20px 18px; min-width: 170px; }
+            .circle-wrap { width: 120px; height: 120px; }
+            .frac-num, .frac-den { font-size: 1.8rem; }
+            .frac-input { font-size: 1.4rem; width: 58px; }
+            .vs-badge { width: 40px; height: 40px; font-size: 0.8rem; }
+            .check-btn { padding: 14px 32px; font-size: 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="btn" style="position: absolute; top: 20px; left: 20px; background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.1); color: #e2e8f0;">🏠 Menu</a>
+
+    <div class="header">
+        <h1>EQUIVALENT FRACTIONS</h1>
+        <p>Build a fraction that equals the one shown!</p>
+    </div>
+
+    <div class="hud-bar">
+        <div class="hud-pill">⭐ Score: <span class="val" id="score">0</span></div>
+        <div class="hud-pill streak">🔥 Streak: <span class="val" id="streak">0</span></div>
+    </div>
+
+    <div class="arena" id="arena">
+        <!-- Reference card -->
+        <div class="card reference" id="card-ref">
+            <div class="card-label">TARGET</div>
+            <div class="frac-display">
+                <span class="frac-num" id="ref-num">1</span>
+                <div class="frac-line"></div>
+                <span class="frac-den" id="ref-den">2</span>
+            </div>
+            <div class="circle-wrap">
+                <svg class="circle-svg" id="ref-svg" viewBox="-1.15 -1.15 2.3 2.3"></svg>
+            </div>
+        </div>
+
+        <div class="vs-badge">=&thinsp;?</div>
+
+        <!-- Player card -->
+        <div class="card player" id="card-player">
+            <div class="card-label">YOUR FRACTION</div>
+            <div class="input-row">
+                <input type="number" class="frac-input" id="inp-num" min="0" max="99" placeholder="?">
+                <div class="input-divider"></div>
+                <input type="number" class="frac-input" id="inp-den" min="1" max="99" placeholder="?">
+            </div>
+            <div class="circle-wrap">
+                <svg class="circle-svg" id="player-svg" viewBox="-1.15 -1.15 2.3 2.3"></svg>
+            </div>
+        </div>
+    </div>
+
+    <button class="check-btn" id="btn-check" disabled>Check Match! ✨</button>
+
+    <div class="how-box">
+        <h3>📖 How to Play</h3>
+        <ol>
+            <li>Look at the target fraction and its circle</li>
+            <li>Type a numerator and denominator to build an <strong>equivalent</strong> fraction</li>
+            <li>Watch your circle update live — then hit <strong>Check Match!</strong></li>
+        </ol>
+    </div>
+
+    <!-- Feedback -->
+    <div class="feedback-banner" id="feedback-banner">
+        <div class="feedback-inner" id="feedback-inner"></div>
+    </div>
+
+    <!-- Confetti -->
+    <canvas class="confetti-canvas" id="confetti-canvas"></canvas>
+
+    <script src="equivalent.js"></script>
+</body>
+</html>

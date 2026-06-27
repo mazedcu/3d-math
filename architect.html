@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Architect Builder</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <style>
+        html, body {
+            overflow: auto !important;
+            height: auto !important;
+        }
+        body {
+            background-color: #0f172a;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            color: white;
+            margin: 0;
+            background-image: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+            overflow: auto !important;
+            height: auto !important;
+        }
+
+        .header { margin-top: 20px; text-align: center; }
+
+        .grid-container {
+            position: relative;
+            width: 400px;
+            height: 400px;
+            background: #0f172a;
+            margin-top: 20px;
+            background-image: 
+                linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 40px 40px; /* 10x10 grid */
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+            border: 2px solid #3b82f6;
+            touch-action: none;
+        }
+
+        .svg-layer {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+        }
+
+        .shape-path {
+            fill: rgba(59, 130, 246, 0.3);
+            stroke: #3b82f6;
+            stroke-width: 4;
+            stroke-linejoin: round;
+        }
+        
+        .shape-path.success {
+            fill: rgba(16, 185, 129, 0.4);
+            stroke: #10b981;
+        }
+
+        .vertex {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #f59e0b;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 10px #f59e0b;
+            cursor: grab;
+        }
+        
+        .vertex:active {
+            cursor: grabbing;
+            transform: translate(-50%, -50%) scale(1.2);
+            background: #fbbf24;
+        }
+
+        .hud-top {
+            display: flex;
+            justify-content: space-between;
+            width: 400px;
+            margin-top: 20px;
+            align-items: center;
+        }
+        
+        .target-box {
+            background: rgba(255,255,255,0.1);
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.2);
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        
+        .target-shape-name {
+            color: #34d399;
+            font-weight: 800;
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="btn" style="position: absolute; top: 20px; left: 20px;">🏠 Menu</a>
+    
+    <div class="header">
+        <h1 style="color: #60a5fa; margin: 0;">ARCHITECT BUILDER</h1>
+        <p style="color: #cbd5e1; margin-top: 5px;">Drag the orange vertices to construct the target shape!</p>
+    </div>
+
+    <div class="hud-top">
+        <div class="target-box">Target: <span class="target-shape-name" id="target-name">Square</span></div>
+        <div style="font-size: 1.2rem; color: #fde047;">Score: <span id="score">0</span></div>
+    </div>
+
+    <div class="grid-container" id="grid">
+        <svg class="svg-layer" id="svg-layer">
+            <polygon class="shape-path" id="shape-polygon" points=""></polygon>
+        </svg>
+        <!-- Vertices injected by JS -->
+    </div>
+    
+    <button id="btn-submit" style="margin-top: 20px; background: #10b981; color: white; border: none; padding: 12px 30px; border-radius: 20px; font-size: 1.2rem; font-weight: 700; cursor: pointer; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">Check Shape! 📏</button>
+
+    <script src="architect.js"></script>
+</body>
+</html>
