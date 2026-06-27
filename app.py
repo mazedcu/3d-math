@@ -7,11 +7,77 @@ import uuid
 import ssl
 import smtplib
 import threading
+import time
+import re
+from collections import defaultdict
 from email.message import EmailMessage
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__, static_folder='.', static_url_path='')
-CORS(app)
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', uuid.uuid4().hex)
+CORS(app, origins=os.environ.get('CORS_ORIGINS', '*').split(','))
+
+# ------------------------------------------------------------------
+# Security headers — injected on every response
+# ------------------------------------------------------------------
+@app.after_request
+def add_security_headers(response):
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    response.headers['Permissions-Policy'] = 'camera=(), microphone=(), geolocation=()'
+    return response
+
+# ------------------------------------------------------------------
+# Simple in-memory rate limiter (no extra dependencies)
+# ------------------------------------------------------------------
+_rate_store = defaultdict(list)   # key → list of timestamps
+
+def _rate_limited(key, max_requests, window_seconds):
+    """Return True if the key has exceeded max_requests within window."""
+    now = time.time()
+    timestamps = _rate_store[key]
+    # Prune old entries
+    _rate_store[key] = [t for t in timestamps if now - t < window_seconds]
+    if len(_rate_store[key]) >= max_requests:
+        return True
+    _rate_store[key].append(now)
+    return False
+
+def rate_limit(endpoint, max_req=5, window=60):
+    """Check rate limit for the current request IP + endpoint.
+    Returns a 429 response if exceeded, or None if OK."""
+    ip = request.remote_addr or 'unknown'
+    key = f"{endpoint}:{ip}"
+    if _rate_limited(key, max_req, window):
+        return jsonify({"error": "Too many requests. Please wait and try again."}), 429
+    return None
+
+# ------------------------------------------------------------------
+# Input validation helpers
+# ------------------------------------------------------------------
+def validate_password(password):
+    """Enforce minimum password requirements. Returns error string or None."""
+    if not password or len(password) < 8:
+        return "Password must be at least 8 characters long."
+    if len(password) > 128:
+        return "Password must be at most 128 characters."
+    return None
+
+def validate_email(email):
+    """Basic server-side email format check."""
+    if not email or len(email) > 120:
+        return "Invalid email address."
+    pattern = r'^[^\s@]+@[^\s@]+\.[^\s@]+$'
+    if not re.match(pattern, email):
+        return "Invalid email format."
+    return None
+
+def validate_name(name):
+    if not name or len(name) > 100:
+        return "Name must be between 1 and 100 characters."
+    return None
 
 # ------------------------------------------------------------------
 # Email configuration (read from environment variables, never hardcode)
@@ -194,13 +260,23 @@ def serve_static(path):
 # Auth API Endpoints
 @app.route('/api/register', methods=['POST'])
 def register():
+    rl = rate_limit('register', max_req=5, window=60)
+    if rl: return rl
+
     data = request.json
-    name = data.get('name')
-    email = data.get('email')
-    password = data.get('password')
+    name = data.get('name', '').strip()
+    email = data.get('email', '').strip().lower()
+    password = data.get('password', '')
 
     if not all([name, email, password]):
         return jsonify({"error": "All fields are required"}), 400
+
+    err = validate_name(name)
+    if err: return jsonify({"error": err}), 400
+    err = validate_email(email)
+    if err: return jsonify({"error": err}), 400
+    err = validate_password(password)
+    if err: return jsonify({"error": err}), 400
 
     if User.query.filter_by(email=email).first():
         return jsonify({"error": "Email already registered"}), 400
@@ -214,13 +290,23 @@ def register():
 
 @app.route('/api/trial/register', methods=['POST'])
 def trial_register():
+    rl = rate_limit('trial_register', max_req=5, window=60)
+    if rl: return rl
+
     data = request.json
-    name = data.get('name')
-    email = data.get('email')
-    password = data.get('password')
+    name = data.get('name', '').strip()
+    email = data.get('email', '').strip().lower()
+    password = data.get('password', '')
 
     if not all([name, email, password]):
         return jsonify({"error": "All fields are required"}), 400
+
+    err = validate_name(name)
+    if err: return jsonify({"error": err}), 400
+    err = validate_email(email)
+    if err: return jsonify({"error": err}), 400
+    err = validate_password(password)
+    if err: return jsonify({"error": err}), 400
 
     if User.query.filter_by(email=email).first():
         return jsonify({"error": "Email already registered"}), 400
@@ -248,9 +334,12 @@ def trial_register():
 
 @app.route('/api/login', methods=['POST'])
 def login():
+    rl = rate_limit('login', max_req=5, window=60)
+    if rl: return rl
+
     data = request.json
-    email = data.get('email')
-    password = data.get('password')
+    email = data.get('email', '').strip().lower()
+    password = data.get('password', '')
     
     user = User.query.filter_by(email=email).first()
     if not user or not check_password_hash(user.password_hash, password):
@@ -306,7 +395,10 @@ def status():
 
 @app.route('/api/forgot-password', methods=['POST'])
 def forgot_password():
-    email = request.json.get('email')
+    rl = rate_limit('forgot_password', max_req=3, window=60)
+    if rl: return rl
+
+    email = (request.json.get('email') or '').strip().lower()
     user = User.query.filter_by(email=email).first()
     if not user:
         # Don't reveal if email exists, just pretend it succeeded
@@ -323,9 +415,15 @@ def forgot_password():
 
 @app.route('/api/reset-password', methods=['POST'])
 def reset_password():
+    rl = rate_limit('reset_password', max_req=5, window=60)
+    if rl: return rl
+
     data = request.json
     token = data.get('token')
-    new_password = data.get('password')
+    new_password = data.get('password', '')
+
+    err = validate_password(new_password)
+    if err: return jsonify({"error": err}), 400
     
     user = User.query.filter_by(reset_token=token).first()
     if not user:
@@ -339,13 +437,22 @@ def reset_password():
 
 @app.route('/api/subscribe', methods=['POST'])
 def subscribe():
+    rl = rate_limit('subscribe', max_req=5, window=60)
+    if rl: return rl
+
     data = request.json
-    email = data.get('email')
-    trx_id = data.get('trx_id')
+    email = (data.get('email') or '').strip().lower()
+    trx_id = (data.get('trx_id') or '').strip()
     plan = data.get('plan')
 
     if not all([email, trx_id, plan]):
         return jsonify({"error": "Missing required fields"}), 400
+
+    if len(trx_id) > 100:
+        return jsonify({"error": "Transaction ID is too long."}), 400
+
+    if plan not in ('monthly', 'yearly'):
+        return jsonify({"error": "Invalid plan."}), 400
 
     user = User.query.filter_by(email=email).first()
     if not user:
@@ -362,10 +469,10 @@ def subscribe():
 
     return jsonify({"message": "Subscription request submitted successfully! Awaiting admin approval."}), 201
 
-# Admin Authentication
-ADMIN_USER = 'mazedcu@gmail.com'
-ADMIN_PASS = '114598Tonnihasan'
-ADMIN_TOKEN = 'mathhub_admin_secret_token_999'
+# Admin Authentication — credentials from environment variables, never hardcoded
+ADMIN_USER = os.environ.get('ADMIN_USER', 'admin')
+ADMIN_PASS = os.environ.get('ADMIN_PASS', '')          # MUST be set in /etc/numberfield.env
+ADMIN_TOKEN = os.environ.get('ADMIN_TOKEN', uuid.uuid4().hex)
 
 def require_admin(f):
     def wrapper(*args, **kwargs):
@@ -378,9 +485,15 @@ def require_admin(f):
 
 @app.route('/api/admin/login', methods=['POST'])
 def admin_login():
+    rl = rate_limit('admin_login', max_req=3, window=60)
+    if rl: return rl
+
+    if not ADMIN_PASS:
+        return jsonify({"error": "Admin not configured."}), 503
+
     data = request.json
-    username = data.get('username')
-    password = data.get('password')
+    username = (data.get('username') or '').strip()
+    password = data.get('password') or ''
     
     if username == ADMIN_USER and password == ADMIN_PASS:
         return jsonify({"token": ADMIN_TOKEN}), 200
@@ -474,4 +587,4 @@ def reject_transaction(trx_id):
     return jsonify({"message": "Transaction rejected!"}), 200
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(debug=False, port=5000)

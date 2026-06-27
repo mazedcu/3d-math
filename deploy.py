@@ -1,5 +1,7 @@
 import paramiko
 import time
+import os
+import getpass
 
 def run_cmd(ssh, cmd):
     print(f"Executing: {cmd}")
@@ -61,7 +63,8 @@ try:
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     print("Connecting to 198.211.96.4...")
-    ssh.connect('198.211.96.4', username='root', password='114598Tonni')
+    password = os.environ.get('DROPLET_PASS') or getpass.getpass('Droplet root password: ')
+    ssh.connect('198.211.96.4', username='root', password=password)
     print("Connected successfully!")
     
     print("\n--- Installing Dependencies ---")
