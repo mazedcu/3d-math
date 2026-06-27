@@ -129,7 +129,7 @@ function spawnCan() {
         num,
         isFactor,
         vx: (Math.random() - 0.5) * 4,
-        vy: 20 + Math.random() * 8, // Throw much higher
+        vy: 15 + Math.random() * 5, // Lowered throw height
         vz: (Math.random() - 0.5) * 2,
         rx: Math.random() * 5 - 2.5,
         ry: Math.random() * 5 - 2.5,
