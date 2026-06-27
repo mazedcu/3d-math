@@ -61,10 +61,10 @@ const benchTex = new THREE.TextureLoader().load('assets/rusty_metal.png');
 benchTex.wrapS = THREE.RepeatWrapping;
 benchTex.wrapT = THREE.RepeatWrapping;
 benchTex.repeat.set(4, 1);
-const benchGeo = new THREE.BoxGeometry(40, 2, 4);
+const benchGeo = new THREE.BoxGeometry(70, 2, 6);
 const benchMat = new THREE.MeshPhongMaterial({ map: benchTex });
 const benchMesh = new THREE.Mesh(benchGeo, benchMat);
-benchMesh.position.set(0, -6, -20);
+benchMesh.position.set(0, -10, -40);
 scene.add(benchMesh);
 
 // ─── GAME STATE ────────────────────────────────────────────────────
@@ -74,6 +74,7 @@ let lives = 3;
 let playing = false;
 let cans = [];
 let nonFactorsRemaining = 0;
+let particles = [];
 
 const mouse = new THREE.Vector2();
 const raycaster = new THREE.Raycaster();
@@ -119,8 +120,8 @@ function spawnBottles() {
     cans = [];
     nonFactorsRemaining = 0;
 
-    const startX = -18;
-    const spacing = 4;
+    const startX = -30;
+    const spacing = 6.6;
 
     for (let i = 0; i < 10; i++) {
         const num = Math.floor(Math.random() * 20) + 1;
@@ -135,7 +136,7 @@ function spawnBottles() {
         const mesh = new THREE.Mesh(bottleGeometry, mat);
         
         // Spawn in a line
-        mesh.position.set(startX + i * spacing, -4.5, -20);
+        mesh.position.set(startX + i * spacing, -5.25, -40);
         
         // Slight random rotation for variety
         mesh.rotation.y = Math.random() * Math.PI * 2;
@@ -152,6 +153,31 @@ function spawnBottles() {
     // If by chance there are no non-factors, generate again
     if (nonFactorsRemaining === 0) {
         spawnBottles();
+    }
+}
+
+function createBlast(position) {
+    const geom = new THREE.BoxGeometry(0.8, 0.8, 0.8);
+    const colors = [0xef4444, 0xf97316, 0xcbd5e1, 0x475569];
+    
+    for (let i = 0; i < 20; i++) {
+        const mat = new THREE.MeshPhongMaterial({
+            color: colors[Math.floor(Math.random() * colors.length)]
+        });
+        const p = new THREE.Mesh(geom, mat);
+        p.position.copy(position);
+        
+        // Random velocity
+        const vx = (Math.random() - 0.5) * 30;
+        const vy = (Math.random() - 0.2) * 30;
+        const vz = (Math.random() - 0.5) * 30;
+        
+        scene.add(p);
+        particles.push({
+            mesh: p,
+            vx, vy, vz,
+            life: 1.0
+        });
     }
 }
 
@@ -225,6 +251,7 @@ window.addEventListener('mousedown', (e) => {
             
             if (!can.isFactor) {
                 // Correct! Shot a non-factor
+                createBlast(can.mesh.position);
                 playHit();
                 score++;
                 dom.score.textContent = score;
@@ -264,6 +291,24 @@ function animate() {
     // Slowly rotate bottles
     for (let i = 0; i < cans.length; i++) {
         cans[i].mesh.rotation.y += 0.5 * dt;
+    }
+    
+    // Particles
+    for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.mesh.position.x += p.vx * dt;
+        p.mesh.position.y += p.vy * dt;
+        p.mesh.position.z += p.vz * dt;
+        
+        p.vy -= 60 * dt; // gravity
+        
+        p.life -= dt * 1.5; // fade out speed
+        if (p.life <= 0) {
+            scene.remove(p.mesh);
+            particles.splice(i, 1);
+        } else {
+            p.mesh.scale.setScalar(p.life);
+        }
     }
     
     renderer.render(scene, camera);
