@@ -208,9 +208,19 @@ function endGame(reason) {
     dom.gameOver.classList.add('show');
 }
 
+function isPrime(num) {
+    for (let i = 2, s = Math.sqrt(num); i <= s; i++) {
+        if (num % i === 0) return false;
+    }
+    return num > 1;
+}
+
 function startRound() {
-    // Pick new target number < 20 (between 4 and 19)
-    targetNumber = Math.floor(Math.random() * 16) + 4;
+    // Pick new target number < 20 (between 4 and 19), must NOT be prime
+    do {
+        targetNumber = Math.floor(Math.random() * 16) + 4;
+    } while (isPrime(targetNumber));
+    
     dom.target.textContent = targetNumber;
     spawnBottles();
 }
