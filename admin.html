@@ -175,7 +175,12 @@
             }
         }
 
-        function doAdminLogout() {
+        async function doAdminLogout() {
+            try {
+                await fetch('/api/admin/logout', { method: 'POST' });
+            } catch (e) {
+                console.error("Logout error", e);
+            }
             localStorage.removeItem('adminToken');
             checkAdminAuth();
         }

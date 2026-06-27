@@ -282,6 +282,10 @@ def play_game():
     if not game:
         return "Game not specified", 400
         
+    if session.get('is_admin'):
+        filename = f"{game}.html"
+        return send_from_directory('premium_games', filename)
+        
     user_id = session.get('user_id')
     if not user_id:
         return "Unauthorized. Please log in.", 401
@@ -293,11 +297,11 @@ def play_game():
         
     # Check subscription status
     if user.current_status != 'active':
-        # See if they were on a trial that just expired
-        if user.end_date and user.end_date < datetime.datetime.utcnow():
-            user.current_status = 'inactive'
-            db.session.commit()
-        return "Subscription inactive.", 403
+            # See if they were on a trial that just expired
+            if user.end_date and user.end_date < datetime.datetime.utcnow():
+                user.current_status = 'inactive'
+                db.session.commit()
+            return "Subscription inactive.", 403
         
     filename = f"{game}.html"
     return send_from_directory('premium_games', filename)
@@ -548,8 +552,14 @@ def admin_login():
     password = data.get('password') or ''
     
     if username == ADMIN_USER and password == ADMIN_PASS:
+        session['is_admin'] = True
         return jsonify({"token": ADMIN_TOKEN}), 200
     return jsonify({"error": "Invalid credentials"}), 401
+
+@app.route('/api/admin/logout', methods=['POST'])
+def admin_logout():
+    session.pop('is_admin', None)
+    return jsonify({"message": "Logged out"}), 200
 
 @app.route('/api/admin/transactions', methods=['GET'])
 @require_admin
