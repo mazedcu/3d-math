@@ -41,7 +41,7 @@ function playError() {
 
 // ─── THREE.JS SETUP ────────────────────────────────────────────────
 const scene = new THREE.Scene();
-scene.background = new THREE.TextureLoader().load('assets/brick_wall.png');
+scene.background = new THREE.TextureLoader().load('assets/cloudy_bg.png');
 
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
 camera.position.set(0, 0, 15);
