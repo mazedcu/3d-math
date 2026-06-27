@@ -14,7 +14,6 @@ let isChecking = false;
 const SHAPE_TARGETS = [
     'Square',
     'Rectangle',
-    'Rhombus',
     'Parallelogram',
     'Trapezium',
     'Right-Angled Triangle',
@@ -159,8 +158,7 @@ function detectShape() {
         
         if (currentTarget === 'Square' && isSquare) return true;
         if (currentTarget === 'Rectangle' && isRectangle && !isSquare) return true;
-        if (currentTarget === 'Rhombus' && isRhombus) return true;
-        if (currentTarget === 'Parallelogram' && isParallelogram && !isRectangle && !isRhombus) return true;
+        if (currentTarget === 'Parallelogram' && isParallelogram && !isRectangle) return true;
         if (currentTarget === 'Trapezium' && isTrapezium) return true;
         
         return false;
