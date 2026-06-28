@@ -90,11 +90,12 @@
                     <thead>
                         <tr>
                             <th>ID</th>
-                            <th>User Name</th>
+                            <th>Name</th>
                             <th>Email</th>
                             <th>Status</th>
-                            <th>Days Left</th>
-                            <th>Actions</th>
+                            <th>Time Left</th>
+                            <th>Last Login</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody id="usersTableBody">
@@ -323,6 +324,7 @@
                     const row = document.createElement('tr');
                     
                     let statusClass = u.status === 'active' ? 'status-approved' : 'status-rejected';
+                    let lastLoginStr = u.last_login ? new Date(u.last_login + 'Z').toLocaleString() : 'Never';
                     
                     row.innerHTML = `
                         <td>#${u.id}</td>
@@ -330,7 +332,9 @@
                         <td>${u.email}</td>
                         <td><span class="status-badge ${statusClass}">${u.status}</span></td>
                         <td><strong style="color: var(--accent);">${u.days_left}</strong> days</td>
-                        <td class="action-btns">
+                        <td>${lastLoginStr}</td>
+                        <td class="action-btns" style="display: flex; gap: 5px;">
+                            <button class="btn btn-outline btn-small" style="padding: 5px 10px; font-size: 0.8rem;" onclick="changePassword(${u.id})">Change Password</button>
                             <button class="btn btn-outline btn-small" style="color: var(--danger); border-color: var(--danger); padding: 5px 10px; font-size: 0.8rem;" onclick="deleteUser(${u.id})">Delete</button>
                         </td>
                     `;
@@ -363,6 +367,28 @@
                 }
             } catch (err) {
                 alert("Server connection error.");
+            }
+        }
+
+        async function changePassword(id) {
+            const newPassword = prompt(`Enter new password for user #${id}:`);
+            if (!newPassword) return;
+            
+            try {
+                const res = await fetch(`/api/admin/users/${id}/password`, {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({ password: newPassword })
+                });
+                
+                if (res.ok) {
+                    alert("Password updated successfully!");
+                } else {
+                    const err = await res.json();
+                    alert("Error: " + (err.error || "Unknown error"));
+                }
+            } catch (error) {
+                alert("Failed to update password");
             }
         }
 

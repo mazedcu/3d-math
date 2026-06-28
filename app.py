@@ -245,6 +245,7 @@ class User(db.Model):
     reset_token = db.Column(db.String(100), nullable=True)
     current_status = db.Column(db.String(20), default='inactive') # inactive, active
     end_date = db.Column(db.DateTime, nullable=True)
+    last_login = db.Column(db.DateTime, nullable=True)
 
 class Transaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -404,7 +405,9 @@ def login():
     if is_active and user.end_date and user.end_date < datetime.datetime.utcnow():
         is_active = False
         user.current_status = 'inactive'
-        db.session.commit()
+        
+    user.last_login = datetime.datetime.utcnow()
+    db.session.commit()
 
     return jsonify({
         "message": "Login successful",
@@ -596,7 +599,8 @@ def get_users():
             "name": u.name,
             "email": u.email,
             "status": u.current_status,
-            "days_left": days_left
+            "days_left": days_left,
+            "last_login": u.last_login.isoformat() if u.last_login else None
         })
     return jsonify(res), 200
 
@@ -611,6 +615,23 @@ def delete_user(user_id):
     db.session.delete(user)
     db.session.commit()
     return jsonify({"message": "User deleted successfully"}), 200
+
+@app.route('/api/admin/users/<int:user_id>/password', methods=['POST'])
+@require_admin
+def admin_change_password(user_id):
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+        
+    data = request.json
+    new_password = data.get('password', '')
+    err = validate_password(new_password)
+    if err:
+        return jsonify({"error": err}), 400
+        
+    user.password_hash = generate_password_hash(new_password)
+    db.session.commit()
+    return jsonify({"message": "Password updated successfully"}), 200
 
 @app.route('/api/admin/transactions/<int:trx_id>/approve', methods=['POST'])
 @require_admin

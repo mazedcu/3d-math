@@ -80,6 +80,7 @@ try:
     run_cmd(ssh, 'rm -rf /var/www/html')
     run_cmd(ssh, 'git clone https://github.com/mazedcu/3d-math.git /var/www/html')
     run_cmd(ssh, 'cp /tmp/database_backup.db /var/www/html/database.db || true')
+    run_cmd(ssh, 'cd /var/www/html && python3 migrate_db.py || true')
     
     print("\n--- Setting up Python Virtual Environment ---")
     run_cmd(ssh, 'cd /var/www/html && python3 -m venv venv')
