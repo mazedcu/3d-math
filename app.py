@@ -462,6 +462,7 @@ def forgot_password():
     db.session.commit()
 
     # Email the reset link to the user (non-blocking)
+    print(f"\n[LOCAL DEBUG] Password Reset Link for {user.email}:\n{SITE_URL}/?reset_token={token}\n")
     send_reset_email(user, token)
 
     return jsonify({"message": "If that email is registered, a password reset link has been sent. Please check your inbox."}), 200
